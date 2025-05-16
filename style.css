@@ -1,104 +1,56 @@
-/* Fundo azul claro, texto claro estilo terminal IBM anos 80 */
-
 body {
-    background-color: #003366; /* azul escuro estilo terminal */
-    color: #ccffff; /* texto azul claro/neon */
-    font-family: 'Courier New', Courier, monospace;
-    margin: 0;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 20px;
+  margin: 0;
+  padding: 0;
+  background-color: #0f2540; /* azul escuro estilo IBM */
+  font-family: 'Courier New', Courier, monospace;
+  color: #dfefff; /* quase branco */
+  display: flex;
+  height: 100vh;
+  justify-content: center;
+  align-items: center;
 }
 
-#app {
-    width: 90vw;
-    max-width: 800px;
-}
-
-h1 {
-    text-align: center;
-    margin-bottom: 10px;
+#container {
+  width: 90%;
+  max-width: 900px;
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
 }
 
 textarea#editor {
-    width: 100%;
-    height: 400px;
-    background-color: #001933;
-    color: #ccffff;
-    border: none;
-    padding: 10px;
-    font-size: 18px;
-    line-height: 1.4;
-    resize: vertical;
-    outline: none;
-    box-shadow: inset 0 0 10px #0066cc;
+  flex: 1;
+  background-color: #0f2540;
+  color: #dfefff;
+  font-size: 18px;
+  border: none;
+  resize: none;
+  padding: 16px;
+  outline: none;
+  line-height: 1.6;
 }
 
-.buttons {
-    margin-top: 10px;
-    text-align: center;
+textarea::placeholder {
+  color: #8faac7;
 }
 
-button {
-    background-color: #004080;
-    border: 1px solid #3399ff;
-    color: #ccffff;
-    padding: 8px 16px;
-    margin: 0 5px;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 14px;
-    border-radius: 3px;
-    transition: background-color 0.3s;
+.config {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
 }
 
-button:disabled {
-    background-color: #002244;
-    cursor: not-allowed;
+.config label {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  color: #b0d4ff;
 }
 
-button:hover:not(:disabled) {
-    background-color: #3399ff;
-    color: #003366;
-}
-
-#status {
-    margin-top: 10px;
-    min-height: 1.5em;
-    font-style: italic;
-    text-align: center;
-}
-
-#gists-list {
-    background-color: #002244;
-    padding: 15px;
-    margin-top: 20px;
-    border: 1px solid #3399ff;
-    border-radius: 5px;
-}
-
-#gists-list.hidden {
-    display: none;
-}
-
-#gists-list ul {
-    list-style: none;
-    padding-left: 0;
-    max-height: 200px;
-    overflow-y: auto;
-    margin-bottom: 10px;
-}
-
-#gists-list li {
-    cursor: pointer;
-    padding: 5px;
-    border-bottom: 1px solid #3399ff;
-    font-size: 14px;
-}
-
-#gists-list li:hover {
-    background-color: #3399ff;
-    color: #003366;
+input {
+  background-color: #001933;
+  border: 1px solid #476fa6;
+  color: #dfefff;
+  padding: 4px 8px;
+  font-family: 'Courier New', monospace;
 }
