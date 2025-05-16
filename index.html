@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Editor Retro – Salve suas metas no Gist</title>
   <style>
     body {
@@ -26,33 +26,18 @@
       font-size: 0.85rem;
     }
 
-    .menu-item {
-      position: relative;
-      cursor: pointer;
+    .menu-bar > div {
+      cursor: default;
     }
 
-    .dropdowns {
-      position: relative;
-    }
-
-    .dropdown {
-      position: absolute;
-      background-color: #000060;
-      border: 1px solid #000080;
-      display: none;
-      flex-direction: column;
-      z-index: 999;
-      min-width: 140px;
-      font-size: 0.85rem;
-    }
-
-    .dropdown div {
-      padding: 0.4rem 0.8rem;
-      cursor: pointer;
-    }
-
-    .dropdown div:hover {
-      background-color: #001080;
+    #status {
+      position: fixed;
+      bottom: 10px;
+      right: 15px;
+      font-family: 'Courier New', monospace;
+      color: #a0a0ffcc;
+      font-size: 0.9rem;
+      user-select: none;
     }
 
     #editor {
@@ -89,129 +74,90 @@
       border-radius: 6px;
       border: 3px solid #000040;
     }
-
-    #status {
-      padding: 0.5rem;
-      font-size: 0.85rem;
-      background: #000040;
-      color: #ccc;
-      font-family: 'Courier New', Courier, monospace;
-    }
   </style>
 </head>
 <body>
 
-  <!-- Menu retrô -->
   <div class="menu-bar">
-    <div class="menu-item" data-menu="file">File ▾</div>
-    <div class="menu-item" data-menu="edit">Edit ▾</div>
-    <div class="menu-item" data-menu="view">View ▾</div>
+    <div>File</div>
+    <div>Edit</div>
+    <div>View</div>
+    <div>Insert</div>
+    <div>Format</div>
+    <div>Utilities</div>
+    <div>Macro</div>
+    <div>Window</div>
+    <div>Help</div>
   </div>
 
-  <!-- Dropdowns dos menus -->
-  <div class="dropdowns">
-    <div class="dropdown" id="file-menu">
-      <div onclick="newDocument()">New</div>
-      <div onclick="carregarGist()">Open from Gist</div>
-      <div onclick="salvarGist()">Save to Gist</div>
-    </div>
-    <div class="dropdown" id="edit-menu">
-      <div onclick="document.execCommand('undo')">Undo</div>
-      <div onclick="document.execCommand('redo')">Redo</div>
-      <div onclick="selectAll()">Select All</div>
-      <div onclick="clearEditor()">Clear</div>
-    </div>
-    <div class="dropdown" id="view-menu">
-      <div onclick="toggleWordWrap()">Toggle Word Wrap</div>
-    </div>
-  </div>
-
-  <!-- Campos ocultos -->
-  <div style="display: none;">
-    <input type="text" id="token" value="SEU_TOKEN_AQUI">
-    <input type="text" id="gistId" value="SEU_GIST_ID_AQUI">
-  </div>
-
-  <!-- Editor -->
   <textarea id="editor" placeholder="Escreva suas metas para 2025 aqui..."></textarea>
-
-  <!-- Status -->
-  <div id="status">🔄 Carregando...</div>
+  <div id="status"></div>
 
   <script>
     const editor = document.getElementById("editor");
-    const tokenInput = document.getElementById("token");
-    const gistIdInput = document.getElementById("gistId");
     const status = document.getElementById("status");
+
+    // Recupera token e gistId do localStorage, ou pede ao usuário
+    let token = localStorage.getItem("token") || "";
+    let gistId = localStorage.getItem("gistId") || "";
+
+    async function solicitarCredenciais() {
+      while (!token) {
+        token = prompt("Insira seu GitHub Personal Access Token (com permissão para gist):");
+        if (!token) alert("Token obrigatório para continuar.");
+      }
+      while (!gistId) {
+        gistId = prompt("Insira o ID do seu Gist:");
+        if (!gistId) alert("ID do Gist obrigatório para continuar.");
+      }
+      localStorage.setItem("token", token);
+      localStorage.setItem("gistId", gistId);
+    }
+
+    // Se não tem token e gistId, solicita
+    if (!token || !gistId) {
+      solicitarCredenciais().then(() => carregarGist());
+    } else {
+      carregarGist();
+    }
 
     let timeout = null;
 
-    // Menus suspensos
-    document.querySelectorAll(".menu-item").forEach(item => {
-      item.addEventListener("click", () => {
-        const menuId = item.dataset.menu + "-menu";
-        document.querySelectorAll(".dropdown").forEach(drop => {
-          drop.style.display = "none";
-        });
-        const dropdown = document.getElementById(menuId);
-        dropdown.style.display = "block";
-        dropdown.style.left = item.offsetLeft + "px";
-        dropdown.style.top = item.offsetHeight + "px";
-      });
-    });
-
-    // Fecha menus ao clicar fora
-    window.addEventListener("click", (e) => {
-      if (!e.target.classList.contains("menu-item")) {
-        document.querySelectorAll(".dropdown").forEach(drop => {
-          drop.style.display = "none";
-        });
-      }
-    });
-
-    // Auto salvar após 3 segundos sem digitar
     editor.addEventListener("input", () => {
       clearTimeout(timeout);
+      status.textContent = "Salvando...";
       timeout = setTimeout(salvarGist, 3000);
     });
 
-    // Carrega conteúdo ao abrir
-    window.addEventListener("load", carregarGist);
-
     async function carregarGist() {
-      const token = tokenInput.value.trim();
-      const gistId = gistIdInput.value.trim();
-      if (!token || !gistId) {
-        status.textContent = "⚠️ Token ou Gist ID ausente.";
-        return;
-      }
-
       try {
         const res = await fetch(`https://api.github.com/gists/${gistId}`, {
           headers: {
             Authorization: `token ${token}`
           }
         });
+        if (!res.ok) throw new Error("Não foi possível carregar o Gist.");
         const data = await res.json();
         const fileKey = Object.keys(data.files)[0];
         editor.value = data.files[fileKey].content;
-        status.textContent = "📂 Gist carregado com sucesso.";
+        status.textContent = "Gist carregado.";
       } catch (e) {
-        status.textContent = "❌ Erro ao carregar o Gist.";
-        console.error(e);
+        console.error("Erro ao carregar Gist:", e);
+        status.textContent = "Erro ao carregar Gist. Verifique token e ID.";
+        // Forçar nova solicitação se der erro
+        token = "";
+        gistId = "";
+        localStorage.removeItem("token");
+        localStorage.removeItem("gistId");
+        await solicitarCredenciais();
+        carregarGist();
       }
     }
 
     async function salvarGist() {
-      const token = tokenInput.value.trim();
-      const gistId = gistIdInput.value.trim();
       const conteudo = editor.value;
-
-      if (!token || !gistId) return;
-
-      status.textContent = "💾 Salvando...";
       try {
-        await fetch(`https://api.github.com/gists/${gistId}`, {
+        const res = await fetch(`https://api.github.com/gists/${gistId}`, {
           method: "PATCH",
           headers: {
             "Authorization": `token ${token}`,
@@ -225,37 +171,12 @@
             }
           })
         });
-        status.textContent = "✅ Gist salvo com sucesso.";
+        if (!res.ok) throw new Error("Erro ao salvar.");
+        status.textContent = "Salvo!";
+        setTimeout(() => status.textContent = "", 2000);
       } catch (e) {
-        status.textContent = "❌ Erro ao salvar o Gist.";
-        console.error(e);
-      }
-    }
-
-    // Funções dos menus
-    function newDocument() {
-      if (confirm("Deseja limpar o conteúdo atual?")) {
-        editor.value = "";
-        status.textContent = "🆕 Documento limpo.";
-      }
-    }
-
-    function selectAll() {
-      editor.select();
-    }
-
-    function clearEditor() {
-      editor.value = "";
-      status.textContent = "🧹 Conteúdo limpo.";
-    }
-
-    function toggleWordWrap() {
-      if (editor.style.whiteSpace === "pre") {
-        editor.style.whiteSpace = "pre-wrap";
-        status.textContent = "📄 Word Wrap ativado.";
-      } else {
-        editor.style.whiteSpace = "pre";
-        status.textContent = "📜 Word Wrap desativado.";
+        console.error("Erro ao salvar Gist:", e);
+        status.textContent = "Erro ao salvar. Verifique token e conexão.";
       }
     }
   </script>
