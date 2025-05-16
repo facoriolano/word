@@ -189,6 +189,7 @@
   let undoStack = [];
   let redoStack = [];
   let isTyping = false;
+
   const saveState = () => {
     if (undoStack.length === 0 || undoStack[undoStack.length - 1] !== editor.value) {
       undoStack.push(editor.value);
@@ -205,6 +206,17 @@
   });
   editor.addEventListener("keyup", () => {
     isTyping = false;
+  });
+
+  // Eventos para os itens dos menus
+  document.querySelectorAll(".dropdown-item").forEach(item => {
+    item.addEventListener("click", (e) => {
+      const action = e.currentTarget.dataset.action;
+      if (action) {
+        handleMenuAction(action);
+        if (activeMenu) closeDropdown(activeMenu);
+      }
+    });
   });
 
   function handleMenuAction(action) {
@@ -314,43 +326,46 @@
       document.body.appendChild(a);
       a.click();
       setTimeout(() => {
-        document.body.removeChild(a);
         URL.revokeObjectURL(url);
+        document.body.removeChild(a);
       }, 0);
+      setStatus("Arquivo salvo");
     }
-    setStatus("Arquivo salvo");
   }
 
   function openFileDialog() {
     const input = document.createElement("input");
     input.type = "file";
-    input.accept = ".txt,text/plain";
-    input.onchange = e => {
+    input.accept = "text/plain";
+    input.onchange = (e) => {
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = e => {
-        editor.value = e.target.result;
+      reader.onload = () => {
+        editor.value = reader.result;
         saveState();
-        clearStatus();
+        setStatus(`Arquivo "${file.name}" aberto`);
       };
       reader.readAsText(file);
     };
     input.click();
   }
 
+  // Status
+
   function setStatus(msg) {
     statusEl.textContent = msg;
-    setTimeout(() => {
-      if (statusEl.textContent === msg) {
-        statusEl.textContent = "";
-      }
+    clearTimeout(statusEl._timeout);
+    statusEl._timeout = setTimeout(() => {
+      clearStatus();
     }, 3000);
   }
   function clearStatus() {
     statusEl.textContent = "";
   }
-</script>
 
+  // Inicializa estado
+  saveState();
+</script>
 </body>
 </html>
