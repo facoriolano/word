@@ -47,7 +47,8 @@
       font-size: 0.9rem;
     }
 
-    input[type="text"] {
+    input[type="text"],
+    input[type="password"] {
       background-color: #000040;
       color: #c0c0ff;
       border: 1px solid #5050a0;
@@ -110,7 +111,7 @@
 
   <div class="inputs-container">
     <label for="token">Token GitHub:</label>
-    <input type="text" id="token" placeholder="Seu token GitHub (personal access token)">
+    <input type="password" id="token" placeholder="Seu token GitHub">
     <label for="gistId">ID do Gist:</label>
     <input type="text" id="gistId" placeholder="ID do seu Gist">
   </div>
@@ -124,19 +125,27 @@
 
     let timeout = null;
 
+    // Atalho: pressionar Enter nos campos carrega o Gist
+    tokenInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") carregarGist();
+    });
+    gistIdInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") carregarGist();
+    });
+
     // Auto salvar após 3 segundos sem digitar
     editor.addEventListener("input", () => {
       clearTimeout(timeout);
       timeout = setTimeout(salvarGist, 3000);
     });
 
-    // Carrega o conteúdo do Gist ao iniciar
-    window.addEventListener("load", carregarGist);
-
     async function carregarGist() {
       const token = tokenInput.value.trim();
       const gistId = gistIdInput.value.trim();
-      if (!token || !gistId) return;
+      if (!token || !gistId) {
+        alert("Preencha o token e o ID do Gist!");
+        return;
+      }
 
       try {
         const res = await fetch(`https://api.github.com/gists/${gistId}`, {
@@ -147,8 +156,10 @@
         const data = await res.json();
         const fileKey = Object.keys(data.files)[0];
         editor.value = data.files[fileKey].content;
+        console.log("📂 Gist carregado com sucesso!");
       } catch (e) {
-        console.error("Erro ao carregar Gist:", e);
+        console.error("❌ Erro ao carregar Gist:", e);
+        alert("Erro ao carregar o Gist. Verifique se o token e o ID estão corretos.");
       }
     }
 
