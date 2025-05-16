@@ -12,7 +12,6 @@
       height: 100vh;
       display: flex;
       flex-direction: column;
-      position: relative;
     }
 
     .menu-bar {
@@ -23,41 +22,42 @@
       gap: 1.2rem;
       padding: 0.4rem 1rem;
       user-select: none;
-      border-bottom: 2px solid #000040;
       font-size: 0.85rem;
+      position: relative;
     }
 
     .menu-bar > div {
-      cursor: default;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .dropdown {
+      display: none;
+      position: absolute;
+      top: 1.6rem;
+      left: 0;
+      background-color: #000060;
+      border: 1px solid #000040;
+      min-width: 160px;
+      z-index: 1000;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
+
+    .dropdown div {
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+
+    .dropdown div:hover {
+      background-color: #0040a0;
+    }
+
+    .menu-bar > div:hover .dropdown {
+      display: block;
     }
 
     .inputs-container {
-      background-color: #000040;
-      padding: 0.8rem 1rem;
-      display: flex;
-      align-items: center;
-      border-bottom: 2px solid #000060;
-      flex-wrap: wrap;
-    }
-
-    label {
-      color: #c0c0ff;
-      font-weight: bold;
-      margin-left: 1rem;
-      user-select: none;
-      font-size: 0.9rem;
-    }
-
-    input[type="text"],
-    input[type="password"] {
-      background-color: #000040;
-      color: #c0c0ff;
-      border: 1px solid #5050a0;
-      font-family: 'Courier New', Courier, monospace;
-      padding: 0.3rem 0.5rem;
-      margin: 0 0.5rem;
-      border-radius: 2px;
-      width: 20rem;
+      display: none;
     }
 
     #editor {
@@ -96,83 +96,98 @@
     }
 
     #status {
-      position: absolute;
-      bottom: 10px;
-      right: 20px;
-      font-size: 0.8rem;
+      background-color: #000040;
       color: #c0c0ff;
-      background: #000060cc;
+      font-size: 0.75rem;
       padding: 4px 8px;
-      border-radius: 4px;
-      display: none;
+      text-align: right;
+      border-top: 1px solid #000060;
     }
   </style>
 </head>
 <body>
 
   <div class="menu-bar">
-    <div>File</div>
-    <div>Edit</div>
-    <div>View</div>
-    <div>Insert</div>
-    <div>Format</div>
-    <div>Utilities</div>
-    <div>Macro</div>
-    <div>Window</div>
-    <div>Help</div>
-  </div>
-
-  <div class="inputs-container">
-    <label for="token">Token GitHub:</label>
-    <input type="password" id="token" placeholder="Seu token GitHub">
-    <label for="gistId">ID do Gist:</label>
-    <input type="text" id="gistId" placeholder="ID do seu Gist">
+    <div>
+      File
+      <div class="dropdown">
+        <div onclick="novoArquivo()">New</div>
+        <div onclick="carregarGist()">Open from Gist</div>
+        <div onclick="salvarGist()">Save to Gist</div>
+      </div>
+    </div>
+    <div>
+      Edit
+      <div class="dropdown">
+        <div onclick="document.execCommand('undo')">Undo</div>
+        <div onclick="document.execCommand('redo')">Redo</div>
+        <div onclick="document.execCommand('selectAll')">Select All</div>
+        <div onclick="limparEditor()">Clear</div>
+      </div>
+    </div>
+    <div>
+      View
+      <div class="dropdown">
+        <div onclick="alternarQuebraLinha()">Toggle Word Wrap</div>
+      </div>
+    </div>
   </div>
 
   <textarea id="editor" placeholder="Escreva suas metas para 2025 aqui..."></textarea>
+  <div id="status"></div>
 
-  <div id="status">Salvando...</div>
+  <!-- Campos ocultos com token e ID -->
+  <div class="inputs-container">
+    <input type="text" id="token" value="SEU_TOKEN_AQUI">
+    <input type="text" id="gistId" value="SEU_ID_DO_GIST">
+  </div>
 
   <script>
     const editor = document.getElementById("editor");
     const tokenInput = document.getElementById("token");
     const gistIdInput = document.getElementById("gistId");
-    const statusDiv = document.getElementById("status");
+    const status = document.getElementById("status");
 
     let timeout = null;
+    let quebraAutomatica = true;
 
-    // Mostrar feedback visual
-    function mostrarStatus(msg) {
-      statusDiv.textContent = msg;
-      statusDiv.style.display = "block";
-      setTimeout(() => {
-        statusDiv.style.display = "none";
-      }, 1500);
-    }
-
-    // Atalho: pressionar Enter nos campos carrega o Gist
-    tokenInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") carregarGist();
-    });
-    gistIdInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") carregarGist();
-    });
+    // Carrega o Gist automaticamente ao abrir
+    window.addEventListener("load", carregarGist);
 
     // Auto salvar após 3 segundos sem digitar
     editor.addEventListener("input", () => {
+      status.innerText = "Salvando...";
       clearTimeout(timeout);
-      timeout = setTimeout(salvarGist, 3000);
+      timeout = setTimeout(() => {
+        salvarGist().then(() => {
+          status.innerText = "Salvo ✅";
+          setTimeout(() => status.innerText = "", 2000);
+        });
+      }, 3000);
     });
 
-    // Carrega o conteúdo do Gist ao abrir
-    window.addEventListener("load", () => {
-      carregarGist();
-    });
+    function novoArquivo() {
+      if (confirm("Tem certeza que deseja limpar o editor?")) {
+        editor.value = "";
+      }
+    }
+
+    function limparEditor() {
+      editor.value = "";
+    }
+
+    function alternarQuebraLinha() {
+      quebraAutomatica = !quebraAutomatica;
+      editor.style.whiteSpace = quebraAutomatica ? "pre-wrap" : "pre";
+    }
 
     async function carregarGist() {
       const token = tokenInput.value.trim();
       const gistId = gistIdInput.value.trim();
-      if (!token || !gistId) return;
+      if (!token || !gistId) {
+        alert("Configure seu token e ID do Gist.");
+        return;
+      }
 
       try {
         const res = await fetch(`https://api.github.com/gists/${gistId}`, {
@@ -183,10 +198,11 @@
         const data = await res.json();
         const fileKey = Object.keys(data.files)[0];
         editor.value = data.files[fileKey].content;
-        console.log("📂 Gist carregado com sucesso!");
+        status.innerText = "Gist carregado 📂";
+        setTimeout(() => status.innerText = "", 2000);
       } catch (e) {
-        console.error("❌ Erro ao carregar Gist:", e);
-        alert("Erro ao carregar o Gist. Verifique se o token e o ID estão corretos.");
+        console.error("Erro ao carregar Gist:", e);
+        alert("Erro ao carregar Gist. Verifique token e ID.");
       }
     }
 
@@ -198,7 +214,6 @@
       if (!token || !gistId) return;
 
       try {
-        mostrarStatus("Salvando...");
         await fetch(`https://api.github.com/gists/${gistId}`, {
           method: "PATCH",
           headers: {
@@ -213,11 +228,9 @@
             }
           })
         });
-        console.log("✅ Salvo no Gist");
-        mostrarStatus("✅ Salvo");
       } catch (e) {
-        console.error("❌ Erro ao salvar no Gist:", e);
-        mostrarStatus("❌ Erro ao salvar");
+        console.error("Erro ao salvar no Gist:", e);
+        alert("Erro ao salvar no Gist.");
       }
     }
   </script>
