@@ -58,7 +58,7 @@
     color: #90f090;
     font-weight: bold;
     font-family: monospace;
-    min-width: 100px;
+    min-width: 140px;
     text-align: right;
     margin-left: auto;
     align-self: center;
@@ -148,7 +148,6 @@
     menuItem.addEventListener("click", (e) => {
       const target = e.currentTarget;
       const menuName = target.dataset.menu;
-      // Close other dropdowns
       if (activeMenu && activeMenu !== menuName) {
         closeDropdown(activeMenu);
       }
@@ -186,16 +185,6 @@
     }
   });
 
-  // Ações dos dropdowns
-  menuBar.querySelectorAll(".dropdown-item").forEach(item => {
-    item.addEventListener("click", (e) => {
-      const action = e.target.dataset.action;
-      if (!action) return;
-      handleMenuAction(action);
-      if (activeMenu) closeDropdown(activeMenu);
-    });
-  });
-
   // Undo/Redo stacks simples
   let undoStack = [];
   let redoStack = [];
@@ -220,6 +209,7 @@
 
   function handleMenuAction(action) {
     switch (action) {
+      // FILE
       case "new":
         if (confirm("Criar novo arquivo? O conteúdo atual será perdido.")) {
           editor.value = "";
@@ -228,10 +218,10 @@
         }
         break;
       case "open":
-        carregar();
+        openFileDialog();
         break;
       case "save":
-        salvar();
+        saveToFile();
         break;
       case "clear":
         if (confirm("Limpar editor?")) {
@@ -240,6 +230,8 @@
           saveState();
         }
         break;
+
+      // EDIT
       case "undo":
         if (undoStack.length > 1) {
           redoStack.push(undoStack.pop());
@@ -275,6 +267,8 @@
         editor.select();
         setStatus("Selecionado tudo");
         break;
+
+      // VIEW
       case "toggleWordWrap":
         wordWrap = !wordWrap;
         editor.style.whiteSpace = wordWrap ? "pre-wrap" : "pre";
@@ -297,13 +291,66 @@
         }
         setStatus(`Modo escuro: ${darkMode ? "ativado" : "desativado"}`);
         break;
+
       default:
         setStatus(`Ação "${action}" não implementada`);
     }
+  }
+
+  // Funções para salvar e abrir arquivos localmente
+
+  function saveToFile() {
+    const blob = new Blob([editor.value], {type: "text/plain;charset=utf-8"});
+    const filename = "metas-2025.txt";
+
+    if (window.navigator.msSaveOrOpenBlob) {
+      // IE fallback
+      window.navigator.msSaveOrOpenBlob(blob, filename);
+    } else {
+      const a = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 0);
+    }
+    setStatus("Arquivo salvo");
+  }
+
+  function openFileDialog() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".txt,text/plain";
+    input.onchange = e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        editor.value = e.target.result;
+        saveState();
+        clearStatus();
+      };
+      reader.readAsText(file);
+    };
+    input.click();
   }
 
   function setStatus(msg) {
     statusEl.textContent = msg;
     setTimeout(() => {
       if (statusEl.textContent === msg) {
-        statusEl.textContent =
+        statusEl.textContent = "";
+      }
+    }, 3000);
+  }
+  function clearStatus() {
+    statusEl.textContent = "";
+  }
+</script>
+
+</body>
+</html>
