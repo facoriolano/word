@@ -60,30 +60,3 @@ async function salvarGist() {
   }
 }
 
-const GIST_URL = "https://api.github.com/gists/SEU_ID_DO_GIST";
-const GITHUB_TOKEN = "SEU_TOKEN_GITHUB";
-
-function salvarNoGist(conteudo) {
-    fetch(GIST_URL, {
-        method: "PATCH",
-        headers: {
-            "Authorization": `Bearer ${GITHUB_TOKEN}`,
-            "Accept": "application/vnd.github+json",
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            files: {
-                "metas.txt": {
-                    content: conteudo
-                }
-            }
-        })
-    }).then(response => {
-        if (!response.ok) {
-            throw new Error("Erro ao salvar no Gist");
-        }
-        console.log("Salvo no Gist com sucesso!");
-    }).catch(error => {
-        console.error("Erro:", error);
-    });
-}
