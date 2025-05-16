@@ -238,9 +238,12 @@
   let redoStack = [];
   let isTyping = false;
   const saveState = () => {
-    undoStack.push(editor.value);
-    if (undoStack.length > 100) undoStack.shift();
-    redoStack = [];
+    // Só salva se diferente do último estado
+    if (undoStack.length === 0 || undoStack[undoStack.length - 1] !== editor.value) {
+      undoStack.push(editor.value);
+      if (undoStack.length > 100) undoStack.shift();
+      redoStack = [];
+    }
   };
 
   editor.addEventListener("input", () => {
@@ -282,7 +285,9 @@
         if (undoStack.length > 1) {
           redoStack.push(undoStack.pop());
           editor.value = undoStack[undoStack.length - 1];
-          setCaretToEnd(editor);
+          setStatus("Undo");
+        } else {
+          setStatus("Nada para desfazer");
         }
         break;
       case "redo":
@@ -290,147 +295,102 @@
           const val = redoStack.pop();
           editor.value = val;
           undoStack.push(val);
-          setCaretToEnd(editor);
+          setStatus("Redo");
+        } else {
+          setStatus("Nada para refazer");
         }
         break;
       case "cut":
         document.execCommand("cut");
+        setStatus("Cortado");
         break;
       case "copy":
         document.execCommand("copy");
+        setStatus("Copiado");
         break;
       case "paste":
         document.execCommand("paste");
+        setStatus("Colado");
         break;
       case "selectAll":
         editor.select();
+        setStatus("Selecionado tudo");
         break;
 
       // VIEW
       case "toggleWordWrap":
         wordWrap = !wordWrap;
         editor.style.whiteSpace = wordWrap ? "pre-wrap" : "pre";
+        setStatus(`Quebra de linha: ${wordWrap ? "ligada" : "desligada"}`);
         break;
       case "toggleDarkMode":
-        toggleDarkMode();
+        darkMode = !darkMode;
+        if (darkMode) {
+          document.body.style.backgroundColor = "#222222";
+          editor.style.backgroundColor = "#111111";
+          editor.style.color = "#eeeeee";
+          document.querySelector(".menu-bar").style.background = "linear-gradient(90deg, #555555, #222222)";
+          document.querySelector(".inputs-container").style.backgroundColor = "#222222";
+          statusEl.style.color = "#aaffaa";
+        } else {
+          document.body.style.backgroundColor = "#000080";
+          editor.style.backgroundColor = "#000080";
+          editor.style.color = "#e0e0ff";
+          document.querySelector(".menu-bar").style.background = "linear-gradient(90deg, #0080ff, #004080)";
+          document.querySelector(".inputs-container").style.backgroundColor = "#000040";
+          statusEl.style.color = "#90f090";
+        }
+        setStatus(`Modo escuro: ${darkMode ? "ativado" : "desativado"}`);
         break;
+      default:
+        setStatus(`Ação "${action}" não implementada`);
     }
   }
 
-  function setCaretToEnd(el) {
-    if (typeof el.selectionStart == "number") {
-      el.selectionStart = el.selectionEnd = el.value.length;
-      el.focus();
-    }
+  // Status helpers
+  function setStatus(msg) {
+    statusEl.textContent = msg;
+    setTimeout(() => {
+      if (statusEl.textContent === msg) {
+        statusEl.textContent = "";
+      }
+    }, 3000);
   }
-
-  function toggleDarkMode() {
-    darkMode = !darkMode;
-    if (darkMode) {
-      document.body.style.backgroundColor = "#121212";
-      document.body.style.color = "#cccccc";
-      editor.style.backgroundColor = "#222222";
-      editor.style.color = "#eeeeee";
-      menuBar.style.background = "linear-gradient(90deg, #444, #222)";
-    } else {
-      document.body.style.backgroundColor = "#000080";
-      document.body.style.color = "#ffffffcc";
-      editor.style.backgroundColor = "#000080";
-      editor.style.color = "#e0e0ff";
-      menuBar.style.background = "linear-gradient(90deg, #0080ff, #004080)";
-    }
-  }
-
   function clearStatus() {
     statusEl.textContent = "";
   }
 
-  // Funções para Gist
+  // ======= Salvamento e carregamento localStorage (adaptado do seu pedido) ========
+
   async function carregarGist() {
-    const token = tokenInput.value.trim();
-    const gistId = gistIdInput.value.trim();
-    if (!token) {
-      alert("Por favor, insira seu token GitHub antes de abrir um Gist.");
-      return;
-    }
-    if (!gistId) {
-      alert("Por favor, insira o ID do Gist para abrir.");
-      return;
-    }
-    setStatus("Carregando...");
-    try {
-      const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
-        headers: {
-          Authorization: `token ${token}`,
-          Accept: "application/vnd.github.v3+json",
-        },
-      });
-      if (!resp.ok) throw new Error("Erro ao buscar Gist");
-      const data = await resp.json();
-      // Pega o primeiro arquivo do gist
-      const firstFile = Object.values(data.files)[0];
-      editor.value = firstFile.content;
+    const saved = localStorage.getItem("editorContent");
+    if (saved !== null) {
+      editor.value = saved;
       clearStatus();
       saveState();
-    } catch (err) {
-      setStatus("Erro ao carregar Gist");
-      alert("Erro ao carregar o Gist. Confira o token e o ID.");
+      setStatus("Arquivo carregado localmente");
+    } else {
+      alert("Nenhum conteúdo salvo localmente encontrado.");
     }
   }
 
   async function salvarGist() {
-    const token = tokenInput.value.trim();
-    const gistId = gistIdInput.value.trim();
-    if (!token) {
-      alert("Por favor, insira seu token GitHub antes de salvar.");
-      return;
-    }
-    if (!gistId) {
-      alert("Por favor, insira o ID do Gist para salvar.");
-      return;
-    }
-    setStatus("Salvando...");
-    try {
-      const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `token ${token}`,
-          Accept: "application/vnd.github.v3+json",
-        },
-        body: JSON.stringify({
-          files: {
-            // Atualiza o primeiro arquivo existente do gist
-            [Object.keys(await (await fetch(`https://api.github.com/gists/${gistId}`, {
-              headers: { Authorization: `token ${token}` }
-            })).json().files)[0]]: {
-              content: editor.value,
-            },
-          },
-        }),
-      });
-      if (!resp.ok) throw new Error("Erro ao salvar Gist");
-      clearStatus();
-      alert("Salvo com sucesso!");
-    } catch (err) {
-      setStatus("Erro ao salvar");
-      alert("Erro ao salvar o Gist. Confira o token e o ID.");
-    }
+    localStorage.setItem("editorContent", editor.value);
+    clearStatus();
+    setStatus("Arquivo salvo localmente");
   }
 
-  function setStatus(text) {
-    statusEl.textContent = text;
-  }
-
-  // Salva automaticamente a cada 20s se token e gistId estiverem preenchidos
+  // Salvar automático a cada 20 segundos
   setInterval(() => {
-    if (tokenInput.value.trim() && gistIdInput.value.trim()) {
-      salvarGist();
-    }
+    salvarGist();
   }, 20000);
 
-  // Inicializa estado
-  editor.style.whiteSpace = wordWrap ? "pre-wrap" : "pre";
+  // Salvar estado inicial
   saveState();
+
+  // Iniciar com word wrap ligado
+  editor.style.whiteSpace = "pre-wrap";
+
 </script>
 </body>
 </html>
