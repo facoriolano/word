@@ -1,184 +1,436 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Editor Retro – Salve suas metas no Gist</title>
-  <style>
-    body {
-      margin: 0;
-      background-color: #000080;
-      font-family: 'Courier New', Courier, monospace;
-      color: #ffffffcc;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .menu-bar {
-      background: linear-gradient(90deg, #0080ff, #004080);
-      color: white;
-      font-weight: bold;
-      display: flex;
-      gap: 1.2rem;
-      padding: 0.4rem 1rem;
-      user-select: none;
-      border-bottom: 2px solid #000040;
-      font-size: 0.85rem;
-    }
-
-    .menu-bar > div {
-      cursor: default;
-    }
-
-    #status {
-      position: fixed;
-      bottom: 10px;
-      right: 15px;
-      font-family: 'Courier New', monospace;
-      color: #a0a0ffcc;
-      font-size: 0.9rem;
-      user-select: none;
-    }
-
-    #editor {
-      flex-grow: 1;
-      background-color: #000080;
-      color: #e0e0ff;
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 1rem;
-      line-height: 1.4;
-      padding: 1rem;
-      border: none;
-      resize: none;
-      outline: none;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      tab-size: 4;
-    }
-
-    #editor::placeholder {
-      color: #a0a0c0;
-      font-style: italic;
-    }
-
-    #editor::-webkit-scrollbar {
-      width: 12px;
-    }
-
-    #editor::-webkit-scrollbar-track {
-      background: #000040;
-    }
-
-    #editor::-webkit-scrollbar-thumb {
-      background-color: #8080ff;
-      border-radius: 6px;
-      border: 3px solid #000040;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Editor Retro – Salve suas metas no Gist</title>
+<style>
+  body {
+    margin: 0;
+    background-color: #000080;
+    font-family: 'Courier New', Courier, monospace;
+    color: #ffffffcc;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .menu-bar {
+    background: linear-gradient(90deg, #0080ff, #004080);
+    color: white;
+    font-weight: bold;
+    display: flex;
+    gap: 1rem;
+    padding: 0.4rem 1rem;
+    user-select: none;
+    border-bottom: 2px solid #000040;
+    font-size: 0.9rem;
+    position: relative;
+  }
+  .menu-item {
+    position: relative;
+    cursor: pointer;
+    padding: 0.2rem 0.6rem;
+    border-radius: 3px;
+  }
+  .menu-item:hover, .menu-item.active {
+    background-color: #003080;
+  }
+  .dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #002060;
+    border: 1px solid #001040;
+    min-width: 150px;
+    z-index: 100;
+    box-shadow: 0 2px 6px #000;
+  }
+  .dropdown .dropdown-item {
+    padding: 0.4rem 0.8rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .dropdown .dropdown-item:hover {
+    background-color: #0040c0;
+  }
+  /* Inputs container */
+  .inputs-container {
+    background-color: #000040;
+    padding: 0.8rem 1rem;
+    display: flex;
+    align-items: center;
+    border-bottom: 2px solid #000060;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+  }
+  label {
+    color: #c0c0ff;
+    font-weight: bold;
+    user-select: none;
+    font-size: 0.9rem;
+  }
+  input[type="text"], input[type="password"] {
+    background-color: #000040;
+    color: #c0c0ff;
+    border: 1px solid #5050a0;
+    font-family: 'Courier New', Courier, monospace;
+    padding: 0.3rem 0.5rem;
+    border-radius: 2px;
+    width: 22rem;
+  }
+  #status {
+    color: #90f090;
+    font-weight: bold;
+    font-family: monospace;
+    min-width: 100px;
+    text-align: right;
+  }
+  #editor {
+    flex-grow: 1;
+    background-color: #000080;
+    color: #e0e0ff;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1rem;
+    line-height: 1.4;
+    padding: 1rem;
+    border: none;
+    resize: none;
+    outline: none;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    tab-size: 4;
+  }
+  #editor::placeholder {
+    color: #a0a0c0;
+    font-style: italic;
+  }
+  #editor::-webkit-scrollbar {
+    width: 12px;
+  }
+  #editor::-webkit-scrollbar-track {
+    background: #000040;
+  }
+  #editor::-webkit-scrollbar-thumb {
+    background-color: #8080ff;
+    border-radius: 6px;
+    border: 3px solid #000040;
+  }
+</style>
 </head>
 <body>
 
-  <div class="menu-bar">
-    <div>File</div>
-    <div>Edit</div>
-    <div>View</div>
-    <div>Insert</div>
-    <div>Format</div>
-    <div>Utilities</div>
-    <div>Macro</div>
-    <div>Window</div>
-    <div>Help</div>
+  <div class="menu-bar" id="menuBar">
+    <div class="menu-item" data-menu="file">File
+      <div class="dropdown" id="fileMenu">
+        <div class="dropdown-item" data-action="new">New</div>
+        <div class="dropdown-item" data-action="open">Open Gist</div>
+        <div class="dropdown-item" data-action="save">Save</div>
+        <div class="dropdown-item" data-action="clear">Clear</div>
+      </div>
+    </div>
+    <div class="menu-item" data-menu="edit">Edit
+      <div class="dropdown" id="editMenu">
+        <div class="dropdown-item" data-action="undo">Undo</div>
+        <div class="dropdown-item" data-action="redo">Redo</div>
+        <div class="dropdown-item" data-action="cut">Cut</div>
+        <div class="dropdown-item" data-action="copy">Copy</div>
+        <div class="dropdown-item" data-action="paste">Paste</div>
+        <div class="dropdown-item" data-action="selectAll">Select All</div>
+        <div class="dropdown-item" data-action="clear">Clear</div>
+      </div>
+    </div>
+    <div class="menu-item" data-menu="view">View
+      <div class="dropdown" id="viewMenu">
+        <div class="dropdown-item" data-action="toggleWordWrap">Toggle Word Wrap</div>
+        <div class="dropdown-item" data-action="toggleDarkMode">Toggle Dark Mode</div>
+      </div>
+    </div>
+    <div class="menu-item" data-menu="insert">Insert</div>
+    <div class="menu-item" data-menu="format">Format</div>
+    <div class="menu-item" data-menu="utilities">Utilities</div>
+    <div class="menu-item" data-menu="macro">Macro</div>
+    <div class="menu-item" data-menu="window">Window</div>
+    <div class="menu-item" data-menu="help">Help</div>
+  </div>
+
+  <div class="inputs-container">
+    <label for="token">Token:</label>
+    <input type="password" id="token" placeholder="Seu token GitHub" autocomplete="off" />
+    <label for="gistId">Gist ID:</label>
+    <input type="text" id="gistId" placeholder="ID do Gist" autocomplete="off" />
+    <div id="status"></div>
   </div>
 
   <textarea id="editor" placeholder="Escreva suas metas para 2025 aqui..."></textarea>
-  <div id="status"></div>
 
-  <script>
-    const editor = document.getElementById("editor");
-    const status = document.getElementById("status");
+<script>
+  const editor = document.getElementById("editor");
+  const tokenInput = document.getElementById("token");
+  const gistIdInput = document.getElementById("gistId");
+  const statusEl = document.getElementById("status");
 
-    // Recupera token e gistId do localStorage, ou pede ao usuário
-    let token = localStorage.getItem("token") || "";
-    let gistId = localStorage.getItem("gistId") || "";
+  // Dropdown menus
+  const menuBar = document.getElementById("menuBar");
+  let activeMenu = null;
 
-    async function solicitarCredenciais() {
-      while (!token) {
-        token = prompt("Insira seu GitHub Personal Access Token (com permissão para gist):");
-        if (!token) alert("Token obrigatório para continuar.");
+  // Word wrap state
+  let wordWrap = true;
+
+  // Dark mode state
+  let darkMode = false;
+
+  // Show/hide dropdown on menu click
+  menuBar.querySelectorAll(".menu-item").forEach(menuItem => {
+    menuItem.addEventListener("click", (e) => {
+      const target = e.currentTarget;
+      const menuName = target.dataset.menu;
+      // Close other dropdowns
+      if (activeMenu && activeMenu !== menuName) {
+        closeDropdown(activeMenu);
       }
-      while (!gistId) {
-        gistId = prompt("Insira o ID do seu Gist:");
-        if (!gistId) alert("ID do Gist obrigatório para continuar.");
+      if (target.classList.contains("active")) {
+        closeDropdown(menuName);
+      } else {
+        openDropdown(menuName);
       }
-      localStorage.setItem("token", token);
-      localStorage.setItem("gistId", gistId);
-    }
-
-    // Se não tem token e gistId, solicita
-    if (!token || !gistId) {
-      solicitarCredenciais().then(() => carregarGist());
-    } else {
-      carregarGist();
-    }
-
-    let timeout = null;
-
-    editor.addEventListener("input", () => {
-      clearTimeout(timeout);
-      status.textContent = "Salvando...";
-      timeout = setTimeout(salvarGist, 3000);
     });
+  });
 
-    async function carregarGist() {
-      try {
-        const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-          headers: {
-            Authorization: `token ${token}`
-          }
-        });
-        if (!res.ok) throw new Error("Não foi possível carregar o Gist.");
-        const data = await res.json();
-        const fileKey = Object.keys(data.files)[0];
-        editor.value = data.files[fileKey].content;
-        status.textContent = "Gist carregado.";
-      } catch (e) {
-        console.error("Erro ao carregar Gist:", e);
-        status.textContent = "Erro ao carregar Gist. Verifique token e ID.";
-        // Forçar nova solicitação se der erro
-        token = "";
-        gistId = "";
-        localStorage.removeItem("token");
-        localStorage.removeItem("gistId");
-        await solicitarCredenciais();
+  function openDropdown(menuName) {
+    const menuItem = document.querySelector(`.menu-item[data-menu="${menuName}"]`);
+    if (!menuItem) return;
+    const dropdown = menuItem.querySelector(".dropdown");
+    if (!dropdown) return;
+    dropdown.style.display = "block";
+    menuItem.classList.add("active");
+    activeMenu = menuName;
+  }
+  function closeDropdown(menuName) {
+    const menuItem = document.querySelector(`.menu-item[data-menu="${menuName}"]`);
+    if (!menuItem) return;
+    const dropdown = menuItem.querySelector(".dropdown");
+    if (!dropdown) return;
+    dropdown.style.display = "none";
+    menuItem.classList.remove("active");
+    if (activeMenu === menuName) activeMenu = null;
+  }
+
+  // Fecha dropdown ao clicar fora
+  document.addEventListener("click", (e) => {
+    if (!menuBar.contains(e.target) && activeMenu) {
+      closeDropdown(activeMenu);
+    }
+  });
+
+  // Ações dos dropdowns
+  menuBar.querySelectorAll(".dropdown-item").forEach(item => {
+    item.addEventListener("click", (e) => {
+      const action = e.target.dataset.action;
+      if (!action) return;
+      handleMenuAction(action);
+      if (activeMenu) closeDropdown(activeMenu);
+    });
+  });
+
+  // Undo/Redo stacks simples
+  let undoStack = [];
+  let redoStack = [];
+  let isTyping = false;
+  const saveState = () => {
+    undoStack.push(editor.value);
+    if (undoStack.length > 100) undoStack.shift();
+    redoStack = [];
+  };
+
+  editor.addEventListener("input", () => {
+    if (!isTyping) {
+      saveState();
+      isTyping = true;
+    }
+  });
+  editor.addEventListener("keyup", () => {
+    isTyping = false;
+  });
+
+  function handleMenuAction(action) {
+    switch (action) {
+      // FILE
+      case "new":
+        if (confirm("Criar novo arquivo? O conteúdo atual será perdido.")) {
+          editor.value = "";
+          clearStatus();
+          saveState();
+        }
+        break;
+      case "open":
         carregarGist();
-      }
-    }
+        break;
+      case "save":
+        salvarGist();
+        break;
+      case "clear":
+        if (confirm("Limpar editor?")) {
+          editor.value = "";
+          clearStatus();
+          saveState();
+        }
+        break;
 
-    async function salvarGist() {
-      const conteudo = editor.value;
-      try {
-        const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-          method: "PATCH",
-          headers: {
-            "Authorization": `token ${token}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            files: {
-              "metas2025.txt": {
-                content: conteudo
-              }
-            }
-          })
-        });
-        if (!res.ok) throw new Error("Erro ao salvar.");
-        status.textContent = "Salvo!";
-        setTimeout(() => status.textContent = "", 2000);
-      } catch (e) {
-        console.error("Erro ao salvar Gist:", e);
-        status.textContent = "Erro ao salvar. Verifique token e conexão.";
-      }
+      // EDIT
+      case "undo":
+        if (undoStack.length > 1) {
+          redoStack.push(undoStack.pop());
+          editor.value = undoStack[undoStack.length - 1];
+          setCaretToEnd(editor);
+        }
+        break;
+      case "redo":
+        if (redoStack.length > 0) {
+          const val = redoStack.pop();
+          editor.value = val;
+          undoStack.push(val);
+          setCaretToEnd(editor);
+        }
+        break;
+      case "cut":
+        document.execCommand("cut");
+        break;
+      case "copy":
+        document.execCommand("copy");
+        break;
+      case "paste":
+        document.execCommand("paste");
+        break;
+      case "selectAll":
+        editor.select();
+        break;
+
+      // VIEW
+      case "toggleWordWrap":
+        wordWrap = !wordWrap;
+        editor.style.whiteSpace = wordWrap ? "pre-wrap" : "pre";
+        break;
+      case "toggleDarkMode":
+        toggleDarkMode();
+        break;
     }
-  </script>
+  }
+
+  function setCaretToEnd(el) {
+    if (typeof el.selectionStart == "number") {
+      el.selectionStart = el.selectionEnd = el.value.length;
+      el.focus();
+    }
+  }
+
+  function toggleDarkMode() {
+    darkMode = !darkMode;
+    if (darkMode) {
+      document.body.style.backgroundColor = "#121212";
+      document.body.style.color = "#cccccc";
+      editor.style.backgroundColor = "#222222";
+      editor.style.color = "#eeeeee";
+      menuBar.style.background = "linear-gradient(90deg, #444, #222)";
+    } else {
+      document.body.style.backgroundColor = "#000080";
+      document.body.style.color = "#ffffffcc";
+      editor.style.backgroundColor = "#000080";
+      editor.style.color = "#e0e0ff";
+      menuBar.style.background = "linear-gradient(90deg, #0080ff, #004080)";
+    }
+  }
+
+  function clearStatus() {
+    statusEl.textContent = "";
+  }
+
+  // Funções para Gist
+  async function carregarGist() {
+    const token = tokenInput.value.trim();
+    const gistId = gistIdInput.value.trim();
+    if (!token) {
+      alert("Por favor, insira seu token GitHub antes de abrir um Gist.");
+      return;
+    }
+    if (!gistId) {
+      alert("Por favor, insira o ID do Gist para abrir.");
+      return;
+    }
+    setStatus("Carregando...");
+    try {
+      const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
+        headers: {
+          Authorization: `token ${token}`,
+          Accept: "application/vnd.github.v3+json",
+        },
+      });
+      if (!resp.ok) throw new Error("Erro ao buscar Gist");
+      const data = await resp.json();
+      // Pega o primeiro arquivo do gist
+      const firstFile = Object.values(data.files)[0];
+      editor.value = firstFile.content;
+      clearStatus();
+      saveState();
+    } catch (err) {
+      setStatus("Erro ao carregar Gist");
+      alert("Erro ao carregar o Gist. Confira o token e o ID.");
+    }
+  }
+
+  async function salvarGist() {
+    const token = tokenInput.value.trim();
+    const gistId = gistIdInput.value.trim();
+    if (!token) {
+      alert("Por favor, insira seu token GitHub antes de salvar.");
+      return;
+    }
+    if (!gistId) {
+      alert("Por favor, insira o ID do Gist para salvar.");
+      return;
+    }
+    setStatus("Salvando...");
+    try {
+      const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `token ${token}`,
+          Accept: "application/vnd.github.v3+json",
+        },
+        body: JSON.stringify({
+          files: {
+            // Atualiza o primeiro arquivo existente do gist
+            [Object.keys(await (await fetch(`https://api.github.com/gists/${gistId}`, {
+              headers: { Authorization: `token ${token}` }
+            })).json().files)[0]]: {
+              content: editor.value,
+            },
+          },
+        }),
+      });
+      if (!resp.ok) throw new Error("Erro ao salvar Gist");
+      clearStatus();
+      alert("Salvo com sucesso!");
+    } catch (err) {
+      setStatus("Erro ao salvar");
+      alert("Erro ao salvar o Gist. Confira o token e o ID.");
+    }
+  }
+
+  function setStatus(text) {
+    statusEl.textContent = text;
+  }
+
+  // Salva automaticamente a cada 20s se token e gistId estiverem preenchidos
+  setInterval(() => {
+    if (tokenInput.value.trim() && gistIdInput.value.trim()) {
+      salvarGist();
+    }
+  }, 20000);
+
+  // Inicializa estado
+  editor.style.whiteSpace = wordWrap ? "pre-wrap" : "pre";
+  saveState();
+</script>
 </body>
 </html>
