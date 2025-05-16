@@ -1,33 +1,101 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Editor Retro - Herói por Acaso</title>
-    <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Word Retro</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: #001f3f; /* azul escuro fósforo */
+      color: #c0c0c0; /* quase branco */
+      font-family: "Courier New", monospace;
+      font-size: 16px;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    header {
+      padding: 8px 12px;
+      background-color: #003366;
+      color: #7FDBFF;
+      font-weight: bold;
+    }
+    textarea {
+      flex: 1;
+      width: 100%;
+      background-color: #001f3f;
+      color: #c0c0c0;
+      border: none;
+      padding: 12px;
+      resize: none;
+      outline: none;
+    }
+    footer {
+      display: flex;
+      gap: 8px;
+      padding: 10px;
+      background-color: #001830;
+      border-top: 1px solid #003366;
+    }
+    button, input[type="file"]::file-selector-button {
+      background-color: #003366;
+      color: #7FDBFF;
+      border: 1px solid #7FDBFF;
+      padding: 6px 10px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    input[type="file"] {
+      color: #7FDBFF;
+    }
+  </style>
 </head>
 <body>
-    <div id="app">
-        <h1>Editor Retro - Herói por Acaso</h1>
+  <header>Word Retro v1988</header>
+  <textarea id="editor" placeholder="Digite seu texto aqui..."></textarea>
+  <footer>
+    <button onclick="salvarTexto()">💾 Salvar</button>
+    <input type="file" accept=".txt" onchange="carregarTexto(event)" />
+  </footer>
 
-        <textarea id="editor" spellcheck="false" placeholder="Digite suas metas e aprendizados aqui..."></textarea>
+  <script>
+    const editor = document.getElementById("editor");
 
-        <div class="buttons">
-            <button id="login-btn">Login GitHub</button>
-            <button id="save-btn" disabled>Salvar no GitHub</button>
-            <button id="load-btn" disabled>Carregar do GitHub</button>
-            <button id="clear-btn">Limpar</button>
-        </div>
+    // Carregar conteúdo salvo automaticamente
+    window.addEventListener("load", () => {
+      const salvo = localStorage.getItem("retro_texto");
+      if (salvo) {
+        editor.value = salvo;
+      }
+    });
 
-        <div id="status"></div>
+    // Salvamento automático
+    editor.addEventListener("input", () => {
+      localStorage.setItem("retro_texto", editor.value);
+    });
 
-        <div id="gists-list" class="hidden">
-            <h2>Seus arquivos no GitHub</h2>
-            <ul id="list"></ul>
-            <button id="close-list">Fechar</button>
-        </div>
-    </div>
+    // Salvar para arquivo
+    function salvarTexto() {
+      const blob = new Blob([editor.value], { type: "text/plain" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "anotacoes.txt";
+      a.click();
+    }
 
-    <script src="app.js"></script>
+    // Carregar de arquivo
+    function carregarTexto(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          editor.value = reader.result;
+          localStorage.setItem("retro_texto", reader.result);
+        };
+        reader.readAsText(file);
+      }
+    }
+  </script>
 </body>
 </html>
