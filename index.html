@@ -2,22 +2,170 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Editor Retrô - Metas 2025</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Editor Retrô - Salvar no Gist</title>
+  <style>
+    body {
+      background-color: #001f3f; /* azul bem escuro tipo IBM fósforo */
+      color: #c0c8d8; /* letras quase brancas, levemente azuis */
+      font-family: 'Courier New', Courier, monospace;
+      margin: 0; padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    header {
+      background-color: #001530;
+      padding: 1em;
+      text-align: center;
+      font-weight: bold;
+      font-size: 1.2em;
+      color: #a0b0d0;
+    }
+    #editor {
+      flex-grow: 1;
+      background-color: #001f3f;
+      color: #c0c8d8;
+      font-size: 16px;
+      border: none;
+      padding: 1em;
+      resize: none;
+      outline: none;
+      line-height: 1.4;
+      font-family: 'Courier New', Courier, monospace;
+    }
+    #config {
+      background-color: #001530;
+      padding: 0.5em 1em;
+      display: flex;
+      gap: 1em;
+      align-items: center;
+      color: #a0b0d0;
+    }
+    #config label {
+      font-size: 0.9em;
+    }
+    #config input {
+      background-color: #003060;
+      border: none;
+      color: #c0c8d8;
+      padding: 0.3em 0.5em;
+      font-family: monospace;
+      font-size: 0.9em;
+      width: 250px;
+      border-radius: 3px;
+    }
+    #status {
+      font-size: 0.9em;
+      color: #70c070;
+      margin-left: auto;
+      font-family: monospace;
+    }
+    @media(max-width: 600px) {
+      #config {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      #config input {
+        width: 100%;
+      }
+      #status {
+        margin-left: 0;
+      }
+    }
+  </style>
 </head>
 <body>
-  <div id="container">
-    <div class="config">
-      <label>🔑 Token GitHub:
-        <input type="password" id="token" placeholder="Cole seu token aqui" />
-      </label>
-      <label>🆔 Gist ID:
-        <input type="text" id="gistId" placeholder="Cole o ID do Gist" />
-      </label>
-    </div>
-    <textarea id="editor" placeholder="Digite suas metas aqui..."></textarea>
-  </div>
-  <script src="script.js"></script>
+
+<header>Editor Retrô - Salve suas metas no GitHub Gist</header>
+
+<div id="config">
+  <label for="token">Token GitHub:</label>
+  <input id="token" type="password" placeholder="Seu token GitHub (personal access token)" autocomplete="off" />
+  
+  <label for="gistId">ID do Gist:</label>
+  <input id="gistId" type="text" placeholder="ID do seu Gist" autocomplete="off" />
+  
+  <div id="status">Status: aguardando</div>
+</div>
+
+<textarea id="editor" spellcheck="false" placeholder="Escreva suas metas para 2025 aqui..."></textarea>
+
+<script>
+  const editor = document.getElementById("editor");
+  const tokenInput = document.getElementById("token");
+  const gistIdInput = document.getElementById("gistId");
+  const status = document.getElementById("status");
+
+  let timeout = null;
+
+  // Quando o token ou gistId mudam, tenta carregar o conteúdo
+  tokenInput.addEventListener("change", carregarGist);
+  gistIdInput.addEventListener("change", carregarGist);
+
+  // Auto salvar a cada 3 segundos após o último input
+  editor.addEventListener("input", () => {
+    status.textContent = "Status: editando...";
+    clearTimeout(timeout);
+    timeout = setTimeout(salvarGist, 3000);
+  });
+
+  async function carregarGist() {
+    const token = tokenInput.value.trim();
+    const gistId = gistIdInput.value.trim();
+    if (!token || !gistId) {
+      status.textContent = "Status: preencha token e gistId";
+      return;
+    }
+
+    status.textContent = "Status: carregando conteúdo do Gist...";
+    try {
+      const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+        headers: { Authorization: `token ${token}` }
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const fileKey = Object.keys(data.files)[0];
+      editor.value = data.files[fileKey].content;
+      status.textContent = "Status: conteúdo carregado";
+    } catch (e) {
+      console.error("Erro ao carregar Gist:", e);
+      status.textContent = "Status: erro ao carregar Gist";
+    }
+  }
+
+  async function salvarGist() {
+    const token = tokenInput.value.trim();
+    const gistId = gistIdInput.value.trim();
+    const conteudo = editor.value;
+
+    if (!token || !gistId) {
+      status.textContent = "Status: preencha token e gistId";
+      return;
+    }
+
+    status.textContent = "Status: salvando no Gist...";
+    try {
+      const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+        method: "PATCH",
+        headers: {
+          "Authorization": `token ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          files: {
+            "metas2025.txt": { content: conteudo }
+          }
+        })
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      status.textContent = "Status: salvo com sucesso ✅";
+    } catch (e) {
+      console.error("Erro ao salvar no Gist:", e);
+      status.textContent = "Status: erro ao salvar";
+    }
+  }
+</script>
+
 </body>
 </html>
