@@ -4,13 +4,13 @@ const gistIdInput = document.getElementById("gistId");
 
 let timeout = null;
 
-// Auto salvar a cada 3 segundos
+// Auto salvar a cada 3 segundos após o último input
 editor.addEventListener("input", () => {
   clearTimeout(timeout);
   timeout = setTimeout(salvarGist, 3000);
 });
 
-// Carrega o conteúdo do Gist ao iniciar
+// Carrega o conteúdo do Gist ao iniciar a página
 window.addEventListener("load", carregarGist);
 
 async function carregarGist() {
@@ -59,4 +59,3 @@ async function salvarGist() {
     console.error("❌ Erro ao salvar no Gist:", e);
   }
 }
-
