@@ -22,42 +22,37 @@
       gap: 1.2rem;
       padding: 0.4rem 1rem;
       user-select: none;
+      border-bottom: 2px solid #000040;
       font-size: 0.85rem;
-      position: relative;
     }
 
-    .menu-bar > div {
+    .menu-item {
       position: relative;
       cursor: pointer;
     }
 
+    .dropdowns {
+      position: relative;
+    }
+
     .dropdown {
-      display: none;
       position: absolute;
-      top: 1.6rem;
-      left: 0;
       background-color: #000060;
-      border: 1px solid #000040;
-      min-width: 160px;
-      z-index: 1000;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      border: 1px solid #000080;
+      display: none;
+      flex-direction: column;
+      z-index: 999;
+      min-width: 140px;
+      font-size: 0.85rem;
     }
 
     .dropdown div {
-      padding: 6px 12px;
+      padding: 0.4rem 0.8rem;
       cursor: pointer;
     }
 
     .dropdown div:hover {
-      background-color: #0040a0;
-    }
-
-    .menu-bar > div:hover .dropdown {
-      display: block;
-    }
-
-    .inputs-container {
-      display: none;
+      background-color: #001080;
     }
 
     #editor {
@@ -96,51 +91,52 @@
     }
 
     #status {
-      background-color: #000040;
-      color: #c0c0ff;
-      font-size: 0.75rem;
-      padding: 4px 8px;
-      text-align: right;
-      border-top: 1px solid #000060;
+      padding: 0.5rem;
+      font-size: 0.85rem;
+      background: #000040;
+      color: #ccc;
+      font-family: 'Courier New', Courier, monospace;
     }
   </style>
 </head>
 <body>
 
+  <!-- Menu retrô -->
   <div class="menu-bar">
-    <div>
-      File
-      <div class="dropdown">
-        <div onclick="novoArquivo()">New</div>
-        <div onclick="carregarGist()">Open from Gist</div>
-        <div onclick="salvarGist()">Save to Gist</div>
-      </div>
+    <div class="menu-item" data-menu="file">File ▾</div>
+    <div class="menu-item" data-menu="edit">Edit ▾</div>
+    <div class="menu-item" data-menu="view">View ▾</div>
+  </div>
+
+  <!-- Dropdowns dos menus -->
+  <div class="dropdowns">
+    <div class="dropdown" id="file-menu">
+      <div onclick="newDocument()">New</div>
+      <div onclick="carregarGist()">Open from Gist</div>
+      <div onclick="salvarGist()">Save to Gist</div>
     </div>
-    <div>
-      Edit
-      <div class="dropdown">
-        <div onclick="document.execCommand('undo')">Undo</div>
-        <div onclick="document.execCommand('redo')">Redo</div>
-        <div onclick="document.execCommand('selectAll')">Select All</div>
-        <div onclick="limparEditor()">Clear</div>
-      </div>
+    <div class="dropdown" id="edit-menu">
+      <div onclick="document.execCommand('undo')">Undo</div>
+      <div onclick="document.execCommand('redo')">Redo</div>
+      <div onclick="selectAll()">Select All</div>
+      <div onclick="clearEditor()">Clear</div>
     </div>
-    <div>
-      View
-      <div class="dropdown">
-        <div onclick="alternarQuebraLinha()">Toggle Word Wrap</div>
-      </div>
+    <div class="dropdown" id="view-menu">
+      <div onclick="toggleWordWrap()">Toggle Word Wrap</div>
     </div>
   </div>
 
-  <textarea id="editor" placeholder="Escreva suas metas para 2025 aqui..."></textarea>
-  <div id="status"></div>
-
-  <!-- Campos ocultos com token e ID -->
-  <div class="inputs-container">
+  <!-- Campos ocultos -->
+  <div style="display: none;">
     <input type="text" id="token" value="SEU_TOKEN_AQUI">
-    <input type="text" id="gistId" value="SEU_ID_DO_GIST">
+    <input type="text" id="gistId" value="SEU_GIST_ID_AQUI">
   </div>
+
+  <!-- Editor -->
+  <textarea id="editor" placeholder="Escreva suas metas para 2025 aqui..."></textarea>
+
+  <!-- Status -->
+  <div id="status">🔄 Carregando...</div>
 
   <script>
     const editor = document.getElementById("editor");
@@ -149,43 +145,44 @@
     const status = document.getElementById("status");
 
     let timeout = null;
-    let quebraAutomatica = true;
 
-    // Carrega o Gist automaticamente ao abrir
-    window.addEventListener("load", carregarGist);
+    // Menus suspensos
+    document.querySelectorAll(".menu-item").forEach(item => {
+      item.addEventListener("click", () => {
+        const menuId = item.dataset.menu + "-menu";
+        document.querySelectorAll(".dropdown").forEach(drop => {
+          drop.style.display = "none";
+        });
+        const dropdown = document.getElementById(menuId);
+        dropdown.style.display = "block";
+        dropdown.style.left = item.offsetLeft + "px";
+        dropdown.style.top = item.offsetHeight + "px";
+      });
+    });
+
+    // Fecha menus ao clicar fora
+    window.addEventListener("click", (e) => {
+      if (!e.target.classList.contains("menu-item")) {
+        document.querySelectorAll(".dropdown").forEach(drop => {
+          drop.style.display = "none";
+        });
+      }
+    });
 
     // Auto salvar após 3 segundos sem digitar
     editor.addEventListener("input", () => {
-      status.innerText = "Salvando...";
       clearTimeout(timeout);
-      timeout = setTimeout(() => {
-        salvarGist().then(() => {
-          status.innerText = "Salvo ✅";
-          setTimeout(() => status.innerText = "", 2000);
-        });
-      }, 3000);
+      timeout = setTimeout(salvarGist, 3000);
     });
 
-    function novoArquivo() {
-      if (confirm("Tem certeza que deseja limpar o editor?")) {
-        editor.value = "";
-      }
-    }
-
-    function limparEditor() {
-      editor.value = "";
-    }
-
-    function alternarQuebraLinha() {
-      quebraAutomatica = !quebraAutomatica;
-      editor.style.whiteSpace = quebraAutomatica ? "pre-wrap" : "pre";
-    }
+    // Carrega conteúdo ao abrir
+    window.addEventListener("load", carregarGist);
 
     async function carregarGist() {
       const token = tokenInput.value.trim();
       const gistId = gistIdInput.value.trim();
       if (!token || !gistId) {
-        alert("Configure seu token e ID do Gist.");
+        status.textContent = "⚠️ Token ou Gist ID ausente.";
         return;
       }
 
@@ -198,11 +195,10 @@
         const data = await res.json();
         const fileKey = Object.keys(data.files)[0];
         editor.value = data.files[fileKey].content;
-        status.innerText = "Gist carregado 📂";
-        setTimeout(() => status.innerText = "", 2000);
+        status.textContent = "📂 Gist carregado com sucesso.";
       } catch (e) {
-        console.error("Erro ao carregar Gist:", e);
-        alert("Erro ao carregar Gist. Verifique token e ID.");
+        status.textContent = "❌ Erro ao carregar o Gist.";
+        console.error(e);
       }
     }
 
@@ -213,6 +209,7 @@
 
       if (!token || !gistId) return;
 
+      status.textContent = "💾 Salvando...";
       try {
         await fetch(`https://api.github.com/gists/${gistId}`, {
           method: "PATCH",
@@ -228,9 +225,37 @@
             }
           })
         });
+        status.textContent = "✅ Gist salvo com sucesso.";
       } catch (e) {
-        console.error("Erro ao salvar no Gist:", e);
-        alert("Erro ao salvar no Gist.");
+        status.textContent = "❌ Erro ao salvar o Gist.";
+        console.error(e);
+      }
+    }
+
+    // Funções dos menus
+    function newDocument() {
+      if (confirm("Deseja limpar o conteúdo atual?")) {
+        editor.value = "";
+        status.textContent = "🆕 Documento limpo.";
+      }
+    }
+
+    function selectAll() {
+      editor.select();
+    }
+
+    function clearEditor() {
+      editor.value = "";
+      status.textContent = "🧹 Conteúdo limpo.";
+    }
+
+    function toggleWordWrap() {
+      if (editor.style.whiteSpace === "pre") {
+        editor.style.whiteSpace = "pre-wrap";
+        status.textContent = "📄 Word Wrap ativado.";
+      } else {
+        editor.style.whiteSpace = "pre";
+        status.textContent = "📜 Word Wrap desativado.";
       }
     }
   </script>
