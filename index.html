@@ -12,6 +12,7 @@
       height: 100vh;
       display: flex;
       flex-direction: column;
+      position: relative;
     }
 
     .menu-bar {
@@ -93,6 +94,18 @@
       border-radius: 6px;
       border: 3px solid #000040;
     }
+
+    #status {
+      position: absolute;
+      bottom: 10px;
+      right: 20px;
+      font-size: 0.8rem;
+      color: #c0c0ff;
+      background: #000060cc;
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -118,12 +131,24 @@
 
   <textarea id="editor" placeholder="Escreva suas metas para 2025 aqui..."></textarea>
 
+  <div id="status">Salvando...</div>
+
   <script>
     const editor = document.getElementById("editor");
     const tokenInput = document.getElementById("token");
     const gistIdInput = document.getElementById("gistId");
+    const statusDiv = document.getElementById("status");
 
     let timeout = null;
+
+    // Mostrar feedback visual
+    function mostrarStatus(msg) {
+      statusDiv.textContent = msg;
+      statusDiv.style.display = "block";
+      setTimeout(() => {
+        statusDiv.style.display = "none";
+      }, 1500);
+    }
 
     // Atalho: pressionar Enter nos campos carrega o Gist
     tokenInput.addEventListener("keypress", (e) => {
@@ -139,13 +164,15 @@
       timeout = setTimeout(salvarGist, 3000);
     });
 
+    // Carrega o conteúdo do Gist ao abrir
+    window.addEventListener("load", () => {
+      carregarGist();
+    });
+
     async function carregarGist() {
       const token = tokenInput.value.trim();
       const gistId = gistIdInput.value.trim();
-      if (!token || !gistId) {
-        alert("Preencha o token e o ID do Gist!");
-        return;
-      }
+      if (!token || !gistId) return;
 
       try {
         const res = await fetch(`https://api.github.com/gists/${gistId}`, {
@@ -171,6 +198,7 @@
       if (!token || !gistId) return;
 
       try {
+        mostrarStatus("Salvando...");
         await fetch(`https://api.github.com/gists/${gistId}`, {
           method: "PATCH",
           headers: {
@@ -186,8 +214,10 @@
           })
         });
         console.log("✅ Salvo no Gist");
+        mostrarStatus("✅ Salvo");
       } catch (e) {
         console.error("❌ Erro ao salvar no Gist:", e);
+        mostrarStatus("❌ Erro ao salvar");
       }
     }
   </script>
