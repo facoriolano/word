@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Editor Retro – Salve suas metas no Gist</title>
+<title>Editor Retro – Salve suas metas</title>
 <style>
   body {
     margin: 0;
@@ -54,37 +54,15 @@
   .dropdown .dropdown-item:hover {
     background-color: #0040c0;
   }
-  /* Inputs container */
-  .inputs-container {
-    background-color: #000040;
-    padding: 0.8rem 1rem;
-    display: flex;
-    align-items: center;
-    border-bottom: 2px solid #000060;
-    flex-wrap: wrap;
-    gap: 0.8rem;
-  }
-  label {
-    color: #c0c0ff;
-    font-weight: bold;
-    user-select: none;
-    font-size: 0.9rem;
-  }
-  input[type="text"], input[type="password"] {
-    background-color: #000040;
-    color: #c0c0ff;
-    border: 1px solid #5050a0;
-    font-family: 'Courier New', Courier, monospace;
-    padding: 0.3rem 0.5rem;
-    border-radius: 2px;
-    width: 22rem;
-  }
   #status {
     color: #90f090;
     font-weight: bold;
     font-family: monospace;
     min-width: 100px;
     text-align: right;
+    margin-left: auto;
+    align-self: center;
+    user-select: none;
   }
   #editor {
     flex-grow: 1;
@@ -124,7 +102,7 @@
     <div class="menu-item" data-menu="file">File
       <div class="dropdown" id="fileMenu">
         <div class="dropdown-item" data-action="new">New</div>
-        <div class="dropdown-item" data-action="open">Open Gist</div>
+        <div class="dropdown-item" data-action="open">Open</div>
         <div class="dropdown-item" data-action="save">Save</div>
         <div class="dropdown-item" data-action="clear">Clear</div>
       </div>
@@ -146,19 +124,6 @@
         <div class="dropdown-item" data-action="toggleDarkMode">Toggle Dark Mode</div>
       </div>
     </div>
-    <div class="menu-item" data-menu="insert">Insert</div>
-    <div class="menu-item" data-menu="format">Format</div>
-    <div class="menu-item" data-menu="utilities">Utilities</div>
-    <div class="menu-item" data-menu="macro">Macro</div>
-    <div class="menu-item" data-menu="window">Window</div>
-    <div class="menu-item" data-menu="help">Help</div>
-  </div>
-
-  <div class="inputs-container">
-    <label for="token">Token:</label>
-    <input type="password" id="token" placeholder="Seu token GitHub" autocomplete="off" />
-    <label for="gistId">Gist ID:</label>
-    <input type="text" id="gistId" placeholder="ID do Gist" autocomplete="off" />
     <div id="status"></div>
   </div>
 
@@ -166,8 +131,6 @@
 
 <script>
   const editor = document.getElementById("editor");
-  const tokenInput = document.getElementById("token");
-  const gistIdInput = document.getElementById("gistId");
   const statusEl = document.getElementById("status");
 
   // Dropdown menus
@@ -238,7 +201,6 @@
   let redoStack = [];
   let isTyping = false;
   const saveState = () => {
-    // Só salva se diferente do último estado
     if (undoStack.length === 0 || undoStack[undoStack.length - 1] !== editor.value) {
       undoStack.push(editor.value);
       if (undoStack.length > 100) undoStack.shift();
@@ -258,7 +220,6 @@
 
   function handleMenuAction(action) {
     switch (action) {
-      // FILE
       case "new":
         if (confirm("Criar novo arquivo? O conteúdo atual será perdido.")) {
           editor.value = "";
@@ -267,10 +228,10 @@
         }
         break;
       case "open":
-        carregarGist();
+        carregar();
         break;
       case "save":
-        salvarGist();
+        salvar();
         break;
       case "clear":
         if (confirm("Limpar editor?")) {
@@ -279,8 +240,6 @@
           saveState();
         }
         break;
-
-      // EDIT
       case "undo":
         if (undoStack.length > 1) {
           redoStack.push(undoStack.pop());
@@ -316,8 +275,6 @@
         editor.select();
         setStatus("Selecionado tudo");
         break;
-
-      // VIEW
       case "toggleWordWrap":
         wordWrap = !wordWrap;
         editor.style.whiteSpace = wordWrap ? "pre-wrap" : "pre";
@@ -330,14 +287,12 @@
           editor.style.backgroundColor = "#111111";
           editor.style.color = "#eeeeee";
           document.querySelector(".menu-bar").style.background = "linear-gradient(90deg, #555555, #222222)";
-          document.querySelector(".inputs-container").style.backgroundColor = "#222222";
           statusEl.style.color = "#aaffaa";
         } else {
           document.body.style.backgroundColor = "#000080";
           editor.style.backgroundColor = "#000080";
           editor.style.color = "#e0e0ff";
           document.querySelector(".menu-bar").style.background = "linear-gradient(90deg, #0080ff, #004080)";
-          document.querySelector(".inputs-container").style.backgroundColor = "#000040";
           statusEl.style.color = "#90f090";
         }
         setStatus(`Modo escuro: ${darkMode ? "ativado" : "desativado"}`);
@@ -347,50 +302,8 @@
     }
   }
 
-  // Status helpers
   function setStatus(msg) {
     statusEl.textContent = msg;
     setTimeout(() => {
       if (statusEl.textContent === msg) {
-        statusEl.textContent = "";
-      }
-    }, 3000);
-  }
-  function clearStatus() {
-    statusEl.textContent = "";
-  }
-
-  // ======= Salvamento e carregamento localStorage (adaptado do seu pedido) ========
-
-  async function carregarGist() {
-    const saved = localStorage.getItem("editorContent");
-    if (saved !== null) {
-      editor.value = saved;
-      clearStatus();
-      saveState();
-      setStatus("Arquivo carregado localmente");
-    } else {
-      alert("Nenhum conteúdo salvo localmente encontrado.");
-    }
-  }
-
-  async function salvarGist() {
-    localStorage.setItem("editorContent", editor.value);
-    clearStatus();
-    setStatus("Arquivo salvo localmente");
-  }
-
-  // Salvar automático a cada 20 segundos
-  setInterval(() => {
-    salvarGist();
-  }, 20000);
-
-  // Salvar estado inicial
-  saveState();
-
-  // Iniciar com word wrap ligado
-  editor.style.whiteSpace = "pre-wrap";
-
-</script>
-</body>
-</html>
+        statusEl.textContent =
