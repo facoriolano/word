@@ -1,56 +1,97 @@
+/* Fundo geral */
 body {
   margin: 0;
-  padding: 0;
-  background-color: #0f2540; /* azul escuro estilo IBM */
+  background-color: #000080; /* azul escuro clássico */
   font-family: 'Courier New', Courier, monospace;
-  color: #dfefff; /* quase branco */
-  display: flex;
+  color: #ffffffcc; /* branco quase */
   height: 100vh;
-  justify-content: center;
-  align-items: center;
-}
-
-#container {
-  width: 90%;
-  max-width: 900px;
-  height: 90vh;
   display: flex;
   flex-direction: column;
 }
 
-textarea#editor {
-  flex: 1;
-  background-color: #0f2540;
-  color: #dfefff;
-  font-size: 18px;
+/* Barra de menu no topo */
+.menu-bar {
+  background: linear-gradient(90deg, #0080ff, #004080);
+  color: white;
+  font-weight: bold;
+  display: flex;
+  gap: 1.2rem;
+  padding: 0.4rem 1rem;
+  user-select: none;
+  border-bottom: 2px solid #000040;
+  font-size: 0.85rem;
+}
+
+/* Itens da barra de menu */
+.menu-bar > div {
+  cursor: default;
+}
+
+/* Editor texto */
+#editor {
+  flex-grow: 1;
+  background-color: #000080; /* mesmo azul do fundo */
+  color: #e0e0ff; /* texto azul clarinho quase branco */
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 1rem;
+  line-height: 1.4;
+  padding: 1rem;
   border: none;
   resize: none;
-  padding: 16px;
   outline: none;
-  line-height: 1.6;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  tab-size: 4;
 }
 
-textarea::placeholder {
-  color: #8faac7;
+/* Barra de rolagem estilo DOS */
+#editor::-webkit-scrollbar {
+  width: 12px;
 }
 
-.config {
+#editor::-webkit-scrollbar-track {
+  background: #000040;
+}
+
+#editor::-webkit-scrollbar-thumb {
+  background-color: #8080ff;
+  border-radius: 6px;
+  border: 3px solid #000040;
+}
+
+/* Placeholder */
+#editor::placeholder {
+  color: #a0a0c0;
+  font-style: italic;
+}
+
+/* Inputs token e gist */
+input[type="text"] {
+  background-color: #000040;
+  color: #c0c0ff;
+  border: 1px solid #5050a0;
+  font-family: 'Courier New', Courier, monospace;
+  padding: 0.3rem 0.5rem;
+  margin: 0 0.5rem;
+  border-radius: 2px;
+  width: 20rem;
+}
+
+/* Labels texto */
+label {
+  color: #c0c0ff;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  margin-left: 1rem;
+  user-select: none;
+  font-size: 0.9rem;
+}
+
+/* Container inputs */
+.inputs-container {
+  background-color: #000040;
+  padding: 0.8rem 1rem;
   display: flex;
-  gap: 16px;
-  margin-bottom: 12px;
-}
-
-.config label {
-  display: flex;
-  flex-direction: column;
-  font-size: 14px;
-  color: #b0d4ff;
-}
-
-input {
-  background-color: #001933;
-  border: 1px solid #476fa6;
-  color: #dfefff;
-  padding: 4px 8px;
-  font-family: 'Courier New', monospace;
+  align-items: center;
+  border-bottom: 2px solid #000060;
 }
