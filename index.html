@@ -1,101 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Word Retro</title>
-  <style>
-    body {
-      margin: 0;
-      background-color: #001f3f; /* azul escuro fósforo */
-      color: #c0c0c0; /* quase branco */
-      font-family: "Courier New", monospace;
-      font-size: 16px;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-    header {
-      padding: 8px 12px;
-      background-color: #003366;
-      color: #7FDBFF;
-      font-weight: bold;
-    }
-    textarea {
-      flex: 1;
-      width: 100%;
-      background-color: #001f3f;
-      color: #c0c0c0;
-      border: none;
-      padding: 12px;
-      resize: none;
-      outline: none;
-    }
-    footer {
-      display: flex;
-      gap: 8px;
-      padding: 10px;
-      background-color: #001830;
-      border-top: 1px solid #003366;
-    }
-    button, input[type="file"]::file-selector-button {
-      background-color: #003366;
-      color: #7FDBFF;
-      border: 1px solid #7FDBFF;
-      padding: 6px 10px;
-      font-family: inherit;
-      cursor: pointer;
-    }
-    input[type="file"] {
-      color: #7FDBFF;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Editor Retrô - Metas 2025</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>Word Retro v1988</header>
-  <textarea id="editor" placeholder="Digite seu texto aqui..."></textarea>
-  <footer>
-    <button onclick="salvarTexto()">💾 Salvar</button>
-    <input type="file" accept=".txt" onchange="carregarTexto(event)" />
-  </footer>
-
-  <script>
-    const editor = document.getElementById("editor");
-
-    // Carregar conteúdo salvo automaticamente
-    window.addEventListener("load", () => {
-      const salvo = localStorage.getItem("retro_texto");
-      if (salvo) {
-        editor.value = salvo;
-      }
-    });
-
-    // Salvamento automático
-    editor.addEventListener("input", () => {
-      localStorage.setItem("retro_texto", editor.value);
-    });
-
-    // Salvar para arquivo
-    function salvarTexto() {
-      const blob = new Blob([editor.value], { type: "text/plain" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "anotacoes.txt";
-      a.click();
-    }
-
-    // Carregar de arquivo
-    function carregarTexto(event) {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          editor.value = reader.result;
-          localStorage.setItem("retro_texto", reader.result);
-        };
-        reader.readAsText(file);
-      }
-    }
-  </script>
+  <div id="container">
+    <div class="config">
+      <label>🔑 Token GitHub:
+        <input type="password" id="token" placeholder="Cole seu token aqui" />
+      </label>
+      <label>🆔 Gist ID:
+        <input type="text" id="gistId" placeholder="Cole o ID do Gist" />
+      </label>
+    </div>
+    <textarea id="editor" placeholder="Digite suas metas aqui..."></textarea>
+  </div>
+  <script src="script.js"></script>
 </body>
 </html>
