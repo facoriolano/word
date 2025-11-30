@@ -1,9 +1,9 @@
-import React, { useState, useCallback } from 'react';
-import Toolbar from './components/Toolbar';
-import StatusBar from './components/StatusBar';
-import AIPromptModal from './components/AIPromptModal';
-import { EditorStatus, ToastMessage } from './types';
-import { generateAICompletion } from './services/geminiService';
+import React, { useState, useCallback, useRef } from 'react';
+import Toolbar from './components/Toolbar.tsx';
+import StatusBar from './components/StatusBar.tsx';
+import AIPromptModal from './components/AIPromptModal.tsx';
+import { EditorStatus, ToastMessage } from './types.ts';
+import { generateAICompletion } from './services/geminiService.ts';
 
 const App: React.FC = () => {
   const [content, setContent] = useState<string>(`// Welcome to RetroWave Editor v1.0
@@ -19,6 +19,10 @@ function helloWorld() {
   const [status, setStatus] = useState<EditorStatus>(EditorStatus.IDLE);
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  
+  // Refs for scroll sync
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const lineNumbersRef = useRef<HTMLDivElement>(null);
 
   // Text Stats
   const lines = content.split('\n').length;
@@ -31,6 +35,13 @@ function helloWorld() {
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
     }, 3000);
+  };
+
+  // Scroll Handler
+  const handleScroll = () => {
+    if (textAreaRef.current && lineNumbersRef.current) {
+      lineNumbersRef.current.scrollTop = textAreaRef.current.scrollTop;
+    }
   };
 
   // File Handlers
@@ -75,7 +86,6 @@ function helloWorld() {
       setStatus(EditorStatus.AI_THINKING);
       const result = await generateAICompletion(content, prompt);
       
-      // If result is not empty, update content
       if (result) {
          setContent(result);
          addToast('AI Request completed.', 'success');
@@ -92,13 +102,13 @@ function helloWorld() {
   };
 
   return (
-    <div className="h-screen bg-retro-bg text-retro-text flex flex-col font-code relative overflow-hidden">
+    <div className="h-full flex flex-col bg-retro-bg text-retro-text font-code overflow-hidden">
       {/* Toast Container */}
-      <div className="fixed top-20 right-4 z-[70] flex flex-col gap-2">
+      <div className="fixed top-20 right-4 z-[70] flex flex-col gap-2 pointer-events-none">
         {toasts.map(toast => (
           <div 
             key={toast.id}
-            className={`px-4 py-3 rounded shadow-lg font-code text-sm transition-all duration-300 border
+            className={`pointer-events-auto px-4 py-3 rounded shadow-lg font-code text-sm transition-all duration-300 border
               ${toast.type === 'success' ? 'bg-retro-surface text-retro-green border-retro-green' : 
                 toast.type === 'error' ? 'bg-retro-surface text-retro-red border-retro-red' : 
                 'bg-retro-surface text-retro-cyan border-retro-cyan'}`}
@@ -118,20 +128,24 @@ function helloWorld() {
         wordCount={content.split(/\s+/).filter(Boolean).length}
       />
 
-      <main className="flex-grow flex relative z-0 overflow-hidden">
+      <main className="flex-1 flex flex-row min-h-0 relative">
         {/* Line Numbers */}
-        <div className="bg-retro-bg w-14 flex flex-col items-end py-4 px-3 select-none text-retro-comment text-sm border-r border-retro-surface overflow-y-hidden">
-          {Array.from({ length: Math.min(lines, 1000) }).map((_, i) => (
-             <div key={i} className="leading-6">{i + 1}</div>
+        <div 
+          ref={lineNumbersRef}
+          className="bg-retro-bg w-14 flex-shrink-0 flex flex-col items-end py-4 px-3 select-none text-retro-comment text-sm border-r border-retro-surface overflow-hidden"
+        >
+          {Array.from({ length: Math.min(lines, 2000) }).map((_, i) => (
+             <div key={i} className="leading-6 h-6">{i + 1}</div>
           ))}
-          {lines > 1000 && <div className="text-xs">...</div>}
         </div>
 
         {/* Text Area */}
         <textarea
+          ref={textAreaRef}
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          className="flex-grow bg-retro-bg text-retro-text p-4 resize-none focus:outline-none leading-6 font-code text-base selection:bg-retro-comment selection:text-white"
+          onScroll={handleScroll}
+          className="flex-1 w-full h-full bg-retro-bg text-retro-text p-4 resize-none focus:outline-none leading-6 font-code text-base selection:bg-retro-comment selection:text-white border-0"
           spellCheck={false}
         />
       </main>
