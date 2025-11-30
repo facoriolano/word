@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Polyfill for process.env to prevent crashes in browser -->
+    <!-- Polyfill for process.env to prevent crashes -->
     <script>
       window.process = { env: { API_KEY: '' } };
     </script>
@@ -22,15 +22,15 @@
           extend: {
             colors: {
               retro: {
-                bg: '#1e1e2e',       // Dark Background
-                surface: '#2a2b3d',  // Editor Surface
-                pink: '#ff79c6',     // Accent 1
-                cyan: '#8be9fd',     // Accent 2
-                green: '#50fa7b',    // Accent 3
-                yellow: '#f1fa8c',   // Accent 4
-                comment: '#6272a4',  // Gray/Purple text
-                text: '#f8f8f2',     // Main text
-                red: '#ff5555'       // Error
+                bg: '#1e1e2e',
+                surface: '#2a2b3d',
+                pink: '#ff79c6',
+                cyan: '#8be9fd',
+                green: '#50fa7b',
+                yellow: '#f1fa8c',
+                comment: '#6272a4',
+                text: '#f8f8f2',
+                red: '#ff5555'
               }
             },
             fontFamily: {
@@ -42,21 +42,36 @@
       }
     </script>
     <style>
-      html, body, #root {
+      html, body {
         height: 100%;
         margin: 0;
         padding: 0;
-        overflow: hidden;
+        overflow: hidden; /* Prevent body scroll, let app handle it */
         background-color: #1e1e2e;
+        color: #f8f8f2;
       }
-      /* Custom Scrollbar */
+      #root {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
       ::-webkit-scrollbar { width: 10px; height: 10px; }
       ::-webkit-scrollbar-track { background: #1e1e2e; }
       ::-webkit-scrollbar-thumb { background: #44475a; border-radius: 5px; border: 2px solid #1e1e2e; }
       ::-webkit-scrollbar-thumb:hover { background: #6272a4; }
+      
+      .loading-screen {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #8be9fd;
+        font-family: 'Fira Code', monospace;
+      }
     </style>
     
-    <!-- Import Map for reliable module loading from CDN -->
+    <!-- Clean Import Map without conflicts -->
     <script type="importmap">
 {
   "imports": {
@@ -71,16 +86,50 @@
 </script>
 </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="loading-screen">
+        <p>Loading RetroWave Editor...</p>
+        <p style="font-size: 0.8em; color: #6272a4; margin-top: 10px;">Initializing interface...</p>
+      </div>
+    </div>
+    
+    <!-- Error Container -->
+    <div id="error-container" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1e1e2e; color: #ff5555; padding: 20px; font-family: monospace; z-index: 9999;">
+      <h2 style="margin-top: 0; color: #ff5555;">Application Error</h2>
+      <pre id="error-message" style="white-space: pre-wrap; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px;"></pre>
+      <button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #44475a; color: white; border: none; cursor: pointer; border-radius: 4px;">Reload</button>
+    </div>
 
-    <!-- Main Application Script - Bundled for GitHub Pages Compatibility -->
+    <!-- Error Catcher -->
+    <script>
+      window.addEventListener('error', function(event) {
+        const container = document.getElementById('error-container');
+        const message = document.getElementById('error-message');
+        if (container && message) {
+          container.style.display = 'block';
+          message.textContent = event.message || 'Unknown error occurred';
+          console.error('Global Error:', event.error);
+        }
+      });
+      window.addEventListener('unhandledrejection', function(event) {
+        const container = document.getElementById('error-container');
+        const message = document.getElementById('error-message');
+        if (container && message) {
+          container.style.display = 'block';
+          message.textContent = 'Promise Rejection: ' + (event.reason?.message || event.reason);
+          console.error('Unhandled Rejection:', event.reason);
+        }
+      });
+    </script>
+
+    <!-- Main Application Script -->
     <script type="text/babel" data-type="module">
       import React, { useState, useCallback, useRef, useEffect } from 'react';
       import { createRoot } from 'react-dom/client';
       import { Save, FolderOpen, Wand2, Terminal, Eraser, Sparkles, X } from 'lucide-react';
       import { GoogleGenAI } from '@google/genai';
 
-      // --- Types ---
+      // --- Types & Constants ---
       const EditorStatus = {
         IDLE: 'IDLE',
         SAVING: 'SAVING',
@@ -94,21 +143,21 @@
         const apiKey = window.process?.env?.API_KEY || '';
         
         if (!apiKey) {
-          // Fallback simulation if no key is present (to avoid crashing the UI demo)
-          console.warn("API Key not found. Using simulation mode.");
-          await new Promise(resolve => setTimeout(resolve, 1500));
-          return currentText + "\n\n// [System]: API Key missing. Please configure process.env.API_KEY.\n// simulated_response: function completed() { return true; }";
+          console.warn("API Key not found.");
+          // Simulated delay for UX
+          await new Promise(resolve => setTimeout(resolve, 800));
+          return currentText + "\n\n// [System]: API Key missing.\n// Please configure process.env.API_KEY to use AI features.";
         }
 
         try {
           const ai = new GoogleGenAI({ apiKey });
           const model = 'gemini-2.5-flash';
           const prompt = `
-            You are a helpful coding assistant integrated into a retro text editor.
+            You are a helpful coding assistant integrated into a modern text editor.
             User Instruction: ${instruction}
             Current File Content:
             ${currentText}
-            Return ONLY the updated or completed text content.
+            Return ONLY the updated or completed text content. Do not include markdown blocks unless requested.
           `;
 
           const response = await ai.models.generateContent({
@@ -199,6 +248,13 @@
 
       const AIPromptModal = ({ isOpen, onClose, onSubmit }) => {
         const [input, setInput] = useState('');
+        
+        useEffect(() => {
+            if (isOpen) {
+               setTimeout(() => document.getElementById('ai-input')?.focus(), 50);
+            }
+        }, [isOpen]);
+
         if (!isOpen) return null;
 
         const handleSubmit = (e) => {
@@ -222,7 +278,13 @@
               </div>
               <form onSubmit={handleSubmit} className="p-6">
                 <label className="block text-retro-text font-code text-sm mb-3">What would you like the AI to do?</label>
-                <textarea value={input} onChange={(e) => setInput(e.target.value)} className="w-full h-32 bg-retro-bg border border-retro-surface text-retro-text p-4 font-code rounded-md focus:outline-none focus:border-retro-pink focus:ring-1 focus:ring-retro-pink transition-all resize-none text-sm" placeholder="e.g., 'Refactor this code', 'Add comments'..." autoFocus />
+                <textarea 
+                  id="ai-input"
+                  value={input} 
+                  onChange={(e) => setInput(e.target.value)} 
+                  className="w-full h-32 bg-retro-bg border border-retro-surface text-retro-text p-4 font-code rounded-md focus:outline-none focus:border-retro-pink focus:ring-1 focus:ring-retro-pink transition-all resize-none text-sm" 
+                  placeholder="e.g., 'Refactor this code', 'Add comments'..." 
+                />
                 <div className="flex justify-end gap-3 mt-6">
                   <button type="button" onClick={onClose} className="px-4 py-2 text-retro-comment font-code text-sm font-medium hover:text-retro-text transition-colors">Cancel</button>
                   <button type="submit" className="px-6 py-2 bg-retro-pink text-retro-bg font-bold font-code text-sm rounded-md hover:bg-retro-pink/90 transition-all shadow-md">Generate</button>
@@ -321,7 +383,7 @@ function helloWorld() {
         };
 
         return (
-          <div className="h-full flex flex-col bg-retro-bg text-retro-text font-code overflow-hidden">
+          <div className="h-full flex flex-col bg-retro-bg text-retro-text font-code overflow-hidden relative">
             <div className="fixed top-20 right-4 z-[70] flex flex-col gap-2 pointer-events-none">
               {toasts.map(toast => (
                 <div key={toast.id} className={`pointer-events-auto px-4 py-3 rounded shadow-lg font-code text-sm transition-all duration-300 border ${toast.type === 'success' ? 'bg-retro-surface text-retro-green border-retro-green' : toast.type === 'error' ? 'bg-retro-surface text-retro-red border-retro-red' : 'bg-retro-surface text-retro-cyan border-retro-cyan'}`}>
@@ -347,8 +409,16 @@ function helloWorld() {
         );
       };
 
-      const root = createRoot(document.getElementById('root'));
-      root.render(<App />);
+      try {
+        const rootElement = document.getElementById('root');
+        if (!rootElement) throw new Error("Root element not found");
+        const root = createRoot(rootElement);
+        root.render(<App />);
+      } catch (err) {
+        console.error("Mount Error:", err);
+        document.getElementById('error-container').style.display = 'block';
+        document.getElementById('error-message').textContent = err.toString();
+      }
     </script>
   </body>
 </html>
