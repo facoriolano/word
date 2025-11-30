@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import Toolbar from './components/Toolbar';
 import StatusBar from './components/StatusBar';
 import AIPromptModal from './components/AIPromptModal';
-import { FileData, EditorStatus, ToastMessage } from './types';
+import { EditorStatus, ToastMessage } from './types';
 import { generateAICompletion } from './services/geminiService';
 
 const App: React.FC = () => {
@@ -11,7 +11,7 @@ const App: React.FC = () => {
 // Type away, or ask the AI Oracle for help.
 
 function helloWorld() {
-  const greeting = "Hello, Retro World!";
+  const greeting = "Hello, World!";
   console.log(greeting);
 }
 `);
@@ -78,7 +78,7 @@ function helloWorld() {
       // If result is not empty, update content
       if (result) {
          setContent(result);
-         addToast('AI Oracle has spoken.', 'success');
+         addToast('AI Request completed.', 'success');
       } else {
          addToast('AI returned no content.', 'info');
       }
@@ -92,16 +92,16 @@ function helloWorld() {
   };
 
   return (
-    <div className="min-h-screen bg-retro-bg text-retro-text flex flex-col font-code relative overflow-hidden">
+    <div className="h-screen bg-retro-bg text-retro-text flex flex-col font-code relative overflow-hidden">
       {/* Toast Container */}
       <div className="fixed top-20 right-4 z-[70] flex flex-col gap-2">
         {toasts.map(toast => (
           <div 
             key={toast.id}
-            className={`px-4 py-2 rounded shadow-md font-code text-sm transition-all duration-300
-              ${toast.type === 'success' ? 'bg-retro-green/20 text-retro-green border border-retro-green' : 
-                toast.type === 'error' ? 'bg-retro-red/20 text-retro-red border border-retro-red' : 
-                'bg-retro-cyan/20 text-retro-cyan border border-retro-cyan'}`}
+            className={`px-4 py-3 rounded shadow-lg font-code text-sm transition-all duration-300 border
+              ${toast.type === 'success' ? 'bg-retro-surface text-retro-green border-retro-green' : 
+                toast.type === 'error' ? 'bg-retro-surface text-retro-red border-retro-red' : 
+                'bg-retro-surface text-retro-cyan border-retro-cyan'}`}
           >
             {toast.message}
           </div>
@@ -118,11 +118,11 @@ function helloWorld() {
         wordCount={content.split(/\s+/).filter(Boolean).length}
       />
 
-      <main className="flex-grow flex relative z-0">
+      <main className="flex-grow flex relative z-0 overflow-hidden">
         {/* Line Numbers */}
-        <div className="bg-retro-bg w-12 md:w-16 flex flex-col items-end py-4 px-3 select-none text-retro-comment text-sm md:text-base border-r border-retro-surface">
+        <div className="bg-retro-bg w-14 flex flex-col items-end py-4 px-3 select-none text-retro-comment text-sm border-r border-retro-surface overflow-y-hidden">
           {Array.from({ length: Math.min(lines, 1000) }).map((_, i) => (
-             <div key={i} className="leading-6 opacity-60 hover:text-retro-text transition-colors">{i + 1}</div>
+             <div key={i} className="leading-6">{i + 1}</div>
           ))}
           {lines > 1000 && <div className="text-xs">...</div>}
         </div>
@@ -131,7 +131,7 @@ function helloWorld() {
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          className="flex-grow bg-retro-bg text-retro-text p-4 resize-none focus:outline-none leading-6 font-code text-sm md:text-base selection:bg-retro-comment selection:text-white"
+          className="flex-grow bg-retro-bg text-retro-text p-4 resize-none focus:outline-none leading-6 font-code text-base selection:bg-retro-comment selection:text-white"
           spellCheck={false}
         />
       </main>
