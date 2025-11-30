@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { Save, FolderOpen, Wand2, Terminal, Eraser } from 'lucide-react';
-import { EditorStatus } from '../types';
+import { EditorStatus } from '../types.ts';
 
 interface ToolbarProps {
   status: EditorStatus;
@@ -33,7 +33,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   return (
-    <div className="bg-retro-bg border-b border-retro-surface flex flex-col md:flex-row items-center justify-between p-3 sticky top-0 z-40 shadow-sm">
+    <div className="bg-retro-bg border-b border-retro-surface flex flex-col md:flex-row items-center justify-between p-3 flex-shrink-0 z-40 shadow-sm">
       <div className="flex items-center gap-4 mb-2 md:mb-0">
         <div className="flex items-center gap-2 text-retro-pink font-code text-lg font-bold">
           <Terminal className="w-5 h-5" />
