@@ -28,8 +28,6 @@
             },
             fontFamily: {
               code: ['"Fira Code"', 'monospace'],
-              // Removing pixel font for smooth look, mapping retro to code or sans if needed, 
-              // but purely using code font is cleaner for editors.
               sans: ['"Fira Code"', 'sans-serif'],
             }
           }
@@ -58,6 +56,8 @@
         background-color: #1e1e2e;
         color: #f8f8f2;
         font-family: 'Fira Code', monospace;
+        margin: 0;
+        overflow: hidden; /* Prevent body scroll, handle in app */
       }
     </style>
   <script type="importmap">
@@ -74,5 +74,6 @@
 </head>
   <body>
     <div id="root"></div>
+    <script type="module" src="./index.tsx"></script>
   </body>
 </html>
