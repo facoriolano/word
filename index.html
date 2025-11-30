@@ -1,436 +1,456 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>RetroWave Editor</title>
-    <meta name="description" content="Smooth Text Editor" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CodeWord 98</title>
     
-    <!-- Polyfill for process.env -->
-    <script>
-      window.process = { env: { API_KEY: '' } };
-    </script>
-
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         theme: {
           extend: {
             colors: {
-              retro: {
-                bg: '#1e1e2e',
-                surface: '#2a2b3d',
-                pink: '#ff79c6',
-                cyan: '#8be9fd',
-                green: '#50fa7b',
-                yellow: '#f1fa8c',
-                comment: '#6272a4',
-                text: '#f8f8f2',
-                red: '#ff5555'
+              cw: {
+                bg: '#1e1e2e',      // Deep Navy Background
+                panel: '#282a36',   // Slightly lighter for toolbars
+                paper: '#252538',   // Editor background
+                pink: '#ff79c6',    // Accent 1 (Errors/Keywords)
+                cyan: '#8be9fd',    // Accent 2 (Variables/Funcs)
+                green: '#50fa7b',   // Accent 3 (Success)
+                yellow: '#f1fa8c',  // Accent 4 (Strings/Const)
+                orange: '#ffb86c',  // Accent 5
+                purple: '#bd93f9',  // Accent 6
+                text: '#f8f8f2',    // Main text
+                comment: '#6272a4', // Dimmed text
+                selection: '#44475a',
               }
             },
             fontFamily: {
-              code: ['"Fira Code"', 'monospace'],
-              sans: ['"Fira Code"', 'sans-serif'],
+              mono: ['"Fira Code"', 'monospace'],
+              sans: ['"Inter"', 'sans-serif'],
+              serif: ['"Merriweather"', 'serif'],
             }
           }
         }
       }
     </script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600&family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
     <style>
-      html, body {
-        height: 100%;
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        background-color: #1e1e2e;
+      /* Custom scrollbar to match theme */
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #1e1e2e;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #6272a4;
+        border-radius: 5px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #ff79c6;
+      }
+      /* Editor specific overrides */
+      [contenteditable]:empty:before {
+        content: attr(placeholder);
+        color: #6272a4;
+        font-style: italic;
+      }
+      /* Selection color */
+      ::selection {
+        background: #44475a; 
         color: #f8f8f2;
       }
-      #root {
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-      }
-      /* Custom Scrollbar */
-      ::-webkit-scrollbar { width: 10px; height: 10px; }
-      ::-webkit-scrollbar-track { background: #1e1e2e; }
-      ::-webkit-scrollbar-thumb { background: #44475a; border-radius: 5px; border: 2px solid #1e1e2e; }
-      ::-webkit-scrollbar-thumb:hover { background: #6272a4; }
-      
-      .loading-screen {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        color: #8be9fd;
-        font-family: 'Fira Code', monospace;
-        transition: opacity 0.5s ease;
-      }
     </style>
-    
-    <!-- CLEAN IMPORT MAP - SINGLE REACT VERSION -->
+
+    <!-- Import Map for CDNs -->
     <script type="importmap">
 {
   "imports": {
     "react": "https://esm.sh/react@18.2.0",
     "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-    "lucide-react": "https://esm.sh/lucide-react@0.292.0?deps=react@18.2.0",
+    "lucide-react": "https://esm.sh/lucide-react@0.378.0",
     "@google/genai": "https://esm.sh/@google/genai@0.1.1",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "react/": "https://aistudiocdn.com/react@^19.2.0/"
   }
 }
 </script>
-</head>
-  <body>
-    <div id="root">
-      <div id="loading-ui" class="loading-screen">
-        <p>Loading RetroWave Editor...</p>
-        <p style="font-size: 0.8em; color: #6272a4; margin-top: 10px;">Initializing interface...</p>
-      </div>
-    </div>
-    
-    <!-- Error Overlay -->
-    <div id="error-container" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1e1e2e; color: #ff5555; padding: 20px; font-family: monospace; z-index: 9999;">
-      <h2 style="margin-top: 0; color: #ff5555;">System Error</h2>
-      <pre id="error-message" style="white-space: pre-wrap; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; border: 1px solid #44475a;"></pre>
-      <button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #44475a; color: white; border: none; cursor: pointer; border-radius: 4px; font-family: inherit;">Reload System</button>
-    </div>
 
-    <!-- Watchdog Script -->
-    <script>
-      window.onerror = function(msg, url, line, col, error) {
-        showError(`Error: ${msg}\nLine: ${line}`);
-        return false;
-      };
-      
-      window.onunhandledrejection = function(e) {
-        showError(`Promise Rejection: ${e.reason}`);
-      };
+    <!-- Babel Standalone for in-browser JSX compilation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  </head>
+  <body class="bg-black text-cw-text h-screen overflow-hidden">
+    <div id="root" class="h-full w-full flex items-center justify-center"></div>
 
-      function showError(msg) {
-        const el = document.getElementById('error-container');
-        const txt = document.getElementById('error-message');
-        if (el && txt) {
-          el.style.display = 'block';
-          txt.textContent = msg;
-          document.getElementById('loading-ui').style.display = 'none';
-        }
-      }
-
-      // Safety timeout: increased to 15s for slower connections
-      setTimeout(() => {
-        const root = document.getElementById('root');
-        if (root && root.innerText.includes('Loading RetroWave Editor...')) {
-           console.warn("Mount timeout reached.");
-           setTimeout(() => {
-             if (root && root.innerText.includes('Loading RetroWave Editor...')) {
-               showError("Initialization Timeout.\n\nPossible causes:\n1. Network blocking 'esm.sh' scripts.\n2. Browser extensions interfering.\n\nPlease check your internet connection.");
-             }
-           }, 5000);
-        }
-      }, 10000);
-    </script>
-
-    <!-- MAIN APPLICATION CODE -->
+    <!-- MAIN APPLICATION SCRIPT -->
     <script type="text/babel" data-type="module">
-      import React, { useState, useCallback, useRef, useEffect } from 'react';
+      import React, { useState, useEffect, useRef } from 'react';
       import { createRoot } from 'react-dom/client';
-      import { Save, FolderOpen, Wand2, Terminal, Eraser, Sparkles, X } from 'lucide-react';
-      import { GoogleGenAI } from '@google/genai';
+      import { 
+        Minus, Square, X, FileText, Settings, CircleHelp as HelpCircle, 
+        Type, Save, Printer, Bold, Italic, Underline, AlignLeft, 
+        AlignCenter, AlignRight, List, ListOrdered, Undo, Redo, 
+        Sparkles, ChevronDown, Palette, Highlighter 
+      } from 'lucide-react';
+      import { GoogleGenAI } from "@google/genai";
 
-      // --- Constants ---
-      const EditorStatus = {
-        IDLE: 'IDLE',
-        SAVING: 'SAVING',
-        LOADING: 'LOADING',
-        AI_THINKING: 'AI_THINKING',
-        ERROR: 'ERROR'
+      /**
+       * ==========================================
+       * CONFIGURATION FOR GITHUB / STATIC DEPLOY
+       * ==========================================
+       * Since this is a static HTML file, we shim process.env.
+       * 
+       * TODO: Replace 'YOUR_API_KEY_HERE' with your actual Gemini API Key
+       * Get one here: https://aistudio.google.com/
+       */
+      window.process = {
+        env: {
+          API_KEY: 'YOUR_API_KEY_HERE' 
+        }
       };
 
-      // --- Services ---
-      const generateAICompletion = async (currentText, instruction) => {
-        const apiKey = window.process?.env?.API_KEY || '';
+      // --- CONSTANTS ---
+      const INITIAL_CONTENT = `
+        <h1>Welcome to CodeWord 98</h1>
+        <p>This is a <b>retro-styled</b> word processor inspired by the aesthetics of modern code editors.</p>
+        <p>Type anywhere to start editing. Use the toolbar above to format your text.</p>
+        <p><br></p>
+        <p><i>Features include:</i></p>
+        <ul>
+          <li>Rich text editing</li>
+          <li>Syntax-highlighting color palette</li>
+          <li><b>AI Assistance</b> powered by Gemini</li>
+        </ul>
+      `;
+
+      // --- TYPES ---
+      const AiMode = {
+        FixGrammar: 'FIX_GRAMMAR',
+        Summarize: 'SUMMARIZE',
+        Expand: 'EXPAND',
+        ToneProfessional: 'TONE_PROFESSIONAL'
+      };
+
+      // --- SERVICE: GEMINI AI ---
+      let genAIInstance = null;
+      const getGenAI = () => {
+        if (!genAIInstance) {
+          const apiKey = window.process?.env?.API_KEY;
+          if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
+            console.warn("API Key is missing or default. Please edit the index.html file.");
+            return null;
+          }
+          genAIInstance = new GoogleGenAI({ apiKey });
+        }
+        return genAIInstance;
+      };
+
+      const generateAiContent = async (text, mode) => {
+        const ai = getGenAI();
+        if (!ai) return "Error: API Key missing. Edit index.html to add your key.";
+
+        const modelId = 'gemini-2.5-flash';
+        let prompt = "";
         
-        if (!apiKey) {
-          console.warn("API Key not found.");
-          await new Promise(resolve => setTimeout(resolve, 800));
-          return currentText + "\n\n// [System]: API Key missing.\n// Please configure process.env.API_KEY to use AI features.";
+        switch (mode) {
+          case AiMode.FixGrammar:
+            prompt = `Correct the grammar and spelling of the following text, maintaining the original meaning. Return only the corrected text:\n\n${text}`;
+            break;
+          case AiMode.Summarize:
+            prompt = `Summarize the following text in a concise paragraph:\n\n${text}`;
+            break;
+          case AiMode.Expand:
+            prompt = `Expand on the following text, adding more detail and depth while maintaining the style:\n\n${text}`;
+            break;
+          case AiMode.ToneProfessional:
+            prompt = `Rewrite the following text to sound more professional and corporate:\n\n${text}`;
+            break;
+          default:
+            prompt = text;
         }
 
         try {
-          const ai = new GoogleGenAI({ apiKey });
-          const model = 'gemini-2.5-flash';
-          const prompt = `
-            You are a helpful coding assistant.
-            User Instruction: ${instruction}
-            Current File Content:
-            ${currentText}
-            Return ONLY the updated or completed text content.
-          `;
-
           const response = await ai.models.generateContent({
-            model: model,
+            model: modelId,
             contents: prompt,
           });
-
-          return response.text || "";
+          return response.text || "No response generated.";
         } catch (error) {
           console.error("Gemini API Error:", error);
-          throw error;
+          return "Error generating content. Check console/API Key.";
         }
       };
 
-      // --- Components ---
+      // --- COMPONENT: TOOLBAR ---
+      const Toolbar = ({ onFormat, onAiAction, isAiLoading }) => {
+        const [showAiMenu, setShowAiMenu] = useState(false);
 
-      const Toolbar = ({ status, fileName, onSave, onOpen, onAIClear, onAIAssist, wordCount }) => {
-        const fileInputRef = useRef(null);
+        const ToolBtn = ({ icon: Icon, onClick, active = false, label }) => (
+          <button
+            onClick={onClick}
+            title={label}
+            className={`
+              flex items-center justify-center p-1 min-w-[28px] h-[26px] mx-[1px]
+              border-t border-l border-b-black border-r-black
+              ${active 
+                ? 'bg-cw-selection border-t-black border-l-black border-b-cw-comment border-r-cw-comment' 
+                : 'bg-cw-panel border-cw-comment hover:bg-cw-selection/50 active:border-t-black active:border-l-black active:border-b-cw-comment active:border-r-cw-comment'
+              }
+            `}
+          >
+            <Icon size={14} className={active ? 'text-cw-pink' : 'text-cw-text'} />
+          </button>
+        );
 
-        const handleFileChange = (e) => {
-          if (e.target.files && e.target.files[0]) {
-            onOpen(e.target.files[0]);
-          }
-          if (fileInputRef.current) fileInputRef.current.value = '';
-        };
+        const Divider = () => (
+          <div className="w-[2px] h-[20px] bg-cw-comment/20 mx-1 border-l border-cw-selection/30 border-r border-black/30" />
+        );
 
         return (
-          <div className="bg-retro-bg border-b border-retro-surface flex flex-col md:flex-row items-center justify-between p-3 flex-shrink-0 z-40 shadow-sm">
-            <div className="flex items-center gap-4 mb-2 md:mb-0">
-              <div className="flex items-center gap-2 text-retro-pink font-code text-lg font-bold">
-                <Terminal className="w-5 h-5" />
-                <span>RetroWave</span>
-              </div>
-              <div className="hidden md:block h-5 w-[1px] bg-retro-surface mx-2"></div>
-              <span className="text-retro-comment font-code text-sm">{fileName}</span>
-            </div>
+          <div className="flex items-center px-1 py-1 border-b border-cw-comment bg-cw-panel select-none relative z-20">
+            {/* Handle - Drag Strip */}
+            <div className="w-1 h-5 border-l border-cw-comment border-r border-black mr-2"></div>
 
-            <div className="flex items-center gap-2">
-              <input type="file" accept=".txt,.md,.js,.ts,.json" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
+            <div className="flex items-center space-x-0">
+              <ToolBtn icon={Undo} onClick={() => onFormat('undo')} label="Undo" />
+              <ToolBtn icon={Redo} onClick={() => onFormat('redo')} label="Redo" />
+              <Divider />
+              <ToolBtn icon={Bold} onClick={() => onFormat('bold')} label="Bold" />
+              <ToolBtn icon={Italic} onClick={() => onFormat('italic')} label="Italic" />
+              <ToolBtn icon={Underline} onClick={() => onFormat('underline')} label="Underline" />
+              <Divider />
+              <ToolBtn icon={AlignLeft} onClick={() => onFormat('justifyLeft')} label="Align Left" />
+              <ToolBtn icon={AlignCenter} onClick={() => onFormat('justifyCenter')} label="Align Center" />
+              <ToolBtn icon={AlignRight} onClick={() => onFormat('justifyRight')} label="Align Right" />
+              <Divider />
+              <ToolBtn icon={List} onClick={() => onFormat('insertUnorderedList')} label="Bullet List" />
+              <ToolBtn icon={ListOrdered} onClick={() => onFormat('insertOrderedList')} label="Numbered List" />
               
-              <button onClick={() => fileInputRef.current?.click()} className="group px-4 py-2 bg-retro-surface rounded-md text-retro-cyan font-code text-sm font-medium hover:bg-retro-cyan hover:text-retro-bg transition-all disabled:opacity-50" disabled={status === EditorStatus.AI_THINKING}>
-                <span className="flex items-center gap-2"><FolderOpen className="w-4 h-4" /> Open</span>
-              </button>
-
-              <button onClick={onSave} className="group px-4 py-2 bg-retro-surface rounded-md text-retro-green font-code text-sm font-medium hover:bg-retro-green hover:text-retro-bg transition-all disabled:opacity-50" disabled={status === EditorStatus.AI_THINKING}>
-                <span className="flex items-center gap-2"><Save className="w-4 h-4" /> Save</span>
-              </button>
+              <Divider />
               
-              <div className="h-6 w-[1px] bg-retro-surface mx-1"></div>
+              {/* AI Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowAiMenu(!showAiMenu)}
+                  className={`
+                    flex items-center gap-2 px-2 h-[26px] mx-1 text-xs font-bold tracking-wide
+                    border-t border-l border-b-black border-r-black
+                    transition-colors
+                    ${isAiLoading 
+                      ? 'bg-cw-selection cursor-wait border-t-black border-l-black border-b-cw-comment border-r-cw-comment' 
+                      : 'bg-cw-purple text-cw-bg border-cw-comment hover:brightness-110 active:border-t-black active:border-l-black active:border-b-cw-comment active:border-r-cw-comment'
+                    }
+                  `}
+                >
+                  <Sparkles size={12} />
+                  {isAiLoading ? 'THINKING...' : 'AI ASSIST'}
+                  <ChevronDown size={10} />
+                </button>
 
-              <button onClick={onAIClear} className="group px-4 py-2 bg-retro-surface rounded-md text-retro-red font-code text-sm font-medium hover:bg-retro-red hover:text-retro-bg transition-all disabled:opacity-50" disabled={status === EditorStatus.AI_THINKING}>
-                <span className="flex items-center gap-2"><Eraser className="w-4 h-4" /> Clear</span>
-              </button>
-
-              <button onClick={onAIAssist} className={`group px-4 py-2 rounded-md font-code text-sm font-medium transition-all flex items-center gap-2 shadow-sm ${status === EditorStatus.AI_THINKING ? 'bg-retro-pink text-retro-bg cursor-wait opacity-80' : 'bg-retro-pink text-retro-bg hover:bg-retro-pink/90'}`} disabled={status === EditorStatus.AI_THINKING}>
-                <Wand2 className={`w-4 h-4 ${status === EditorStatus.AI_THINKING ? 'animate-spin' : ''}`} />
-                {status === EditorStatus.AI_THINKING ? 'Working...' : 'AI Assist'}
-              </button>
-            </div>
-          </div>
-        );
-      };
-
-      const StatusBar = ({ status, lines, chars }) => {
-        const getStatusColor = () => {
-          switch (status) {
-            case EditorStatus.AI_THINKING: return 'text-retro-pink';
-            case EditorStatus.ERROR: return 'text-retro-red';
-            case EditorStatus.SAVING: return 'text-retro-green';
-            default: return 'text-retro-comment';
-          }
-        };
-
-        return (
-          <div className="h-8 bg-retro-bg border-t border-retro-comment flex-shrink-0 flex items-center justify-between px-4 font-code text-xs select-none z-40">
-            <div className="flex items-center gap-4">
-              <span className={`uppercase font-bold ${getStatusColor()}`}>[{status}]</span>
-            </div>
-            <div className="flex items-center gap-6 text-retro-comment">
-              <span>Ln {lines}</span>
-              <span>Ch {chars}</span>
-              <span className="hidden sm:inline">UTF-8</span>
-              <span className="hidden sm:inline">TXT</span>
-            </div>
-          </div>
-        );
-      };
-
-      const AIPromptModal = ({ isOpen, onClose, onSubmit }) => {
-        const [input, setInput] = useState('');
-        
-        useEffect(() => {
-            if (isOpen) {
-               setTimeout(() => document.getElementById('ai-input')?.focus(), 50);
-            }
-        }, [isOpen]);
-
-        if (!isOpen) return null;
-
-        const handleSubmit = (e) => {
-          e.preventDefault();
-          if (input.trim()) {
-            onSubmit(input);
-            setInput('');
-            onClose();
-          }
-        };
-
-        return (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
-            <div className="relative bg-retro-bg border border-retro-surface w-full max-w-lg shadow-2xl rounded-lg overflow-hidden transform transition-all">
-              <div className="bg-retro-surface p-4 border-b border-retro-bg flex justify-between items-center">
-                <span className="flex items-center gap-2 text-retro-pink font-bold font-code text-base">
-                  <Sparkles className="w-5 h-5"/> AI Assistant
-                </span>
-                <button onClick={onClose} className="text-retro-comment hover:text-retro-text transition-colors"><X className="w-5 h-5" /></button>
+                {showAiMenu && (
+                  <div className="absolute top-full left-0 mt-1 w-48 bg-cw-panel border-2 border-t-cw-comment border-l-cw-comment border-b-black border-r-black shadow-xl z-50">
+                    {[
+                      { label: 'Fix Grammar', mode: AiMode.FixGrammar },
+                      { label: 'Summarize', mode: AiMode.Summarize },
+                      { label: 'Expand Text', mode: AiMode.Expand },
+                      { label: 'Make Professional', mode: AiMode.ToneProfessional },
+                    ].map((item) => (
+                      <button
+                        key={item.mode}
+                        onClick={() => {
+                          onAiAction(item.mode);
+                          setShowAiMenu(false);
+                        }}
+                        className="w-full text-left px-4 py-2 text-xs text-cw-text hover:bg-cw-selection hover:text-cw-pink transition-colors"
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-              <form onSubmit={handleSubmit} className="p-6">
-                <label className="block text-retro-text font-code text-sm mb-3">What would you like the AI to do?</label>
-                <textarea 
-                  id="ai-input"
-                  value={input} 
-                  onChange={(e) => setInput(e.target.value)} 
-                  className="w-full h-32 bg-retro-bg border border-retro-surface text-retro-text p-4 font-code rounded-md focus:outline-none focus:border-retro-pink focus:ring-1 focus:ring-retro-pink transition-all resize-none text-sm" 
-                  placeholder="e.g., 'Refactor this code', 'Add comments'..." 
-                />
-                <div className="flex justify-end gap-3 mt-6">
-                  <button type="button" onClick={onClose} className="px-4 py-2 text-retro-comment font-code text-sm font-medium hover:text-retro-text transition-colors">Cancel</button>
-                  <button type="submit" className="px-6 py-2 bg-retro-pink text-retro-bg font-bold font-code text-sm rounded-md hover:bg-retro-pink/90 transition-all shadow-md">Generate</button>
-                </div>
-              </form>
             </div>
+            
+            {showAiMenu && (
+              <div 
+                className="fixed inset-0 z-10" 
+                onClick={() => setShowAiMenu(false)}
+              />
+            )}
           </div>
         );
       };
 
+      // --- MAIN APP ---
       const App = () => {
-        const [content, setContent] = useState(`// Welcome to RetroWave Editor v1.0
-// Styled with the Dracula/Synthwave palette.
-// Type away, or ask the AI Oracle for help.
+        const editorRef = useRef(null);
+        const [isAiLoading, setIsAiLoading] = useState(false);
+        const [wordCount, setWordCount] = useState(0);
+        const [charCount, setCharCount] = useState(0);
+        const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        const [isMaximized, setIsMaximized] = useState(false);
 
-function helloWorld() {
-  const greeting = "Hello, World!";
-  console.log(greeting);
-}
-`);
-        const [fileName, setFileName] = useState('untitled.txt');
-        const [status, setStatus] = useState(EditorStatus.IDLE);
-        const [isAIModalOpen, setIsAIModalOpen] = useState(false);
-        const [toasts, setToasts] = useState([]);
-        
-        const textAreaRef = useRef(null);
-        const lineNumbersRef = useRef(null);
-
-        const lines = content.split('\n').length;
-        const chars = content.length;
-
-        const addToast = (message, type) => {
-          const id = Date.now().toString();
-          setToasts(prev => [...prev, { id, message, type }]);
-          setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000);
-        };
-
-        const handleScroll = () => {
-          if (textAreaRef.current && lineNumbersRef.current) {
-            lineNumbersRef.current.scrollTop = textAreaRef.current.scrollTop;
-          }
-        };
-
-        const handleSave = useCallback(() => {
-          try {
-            setStatus(EditorStatus.SAVING);
-            const blob = new Blob([content], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-            addToast('File saved successfully!', 'success');
-            setStatus(EditorStatus.IDLE);
-          } catch (e) {
-            console.error(e);
-            setStatus(EditorStatus.ERROR);
-            addToast('Failed to save file.', 'error');
-          }
-        }, [content, fileName]);
-
-        const handleOpen = useCallback(async (file) => {
-          try {
-            setStatus(EditorStatus.LOADING);
-            const text = await file.text();
-            setContent(text);
-            setFileName(file.name);
-            addToast(`Opened ${file.name}`, 'success');
-            setStatus(EditorStatus.IDLE);
-          } catch (e) {
-            console.error(e);
-            setStatus(EditorStatus.ERROR);
-            addToast('Failed to read file.', 'error');
-          }
+        useEffect(() => {
+          updateStats();
+          const timer = setInterval(() => {
+            setCurrentTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+          }, 1000);
+          return () => clearInterval(timer);
         }, []);
 
-        const handleAIRequest = async (prompt) => {
+        const updateStats = () => {
+          if (!editorRef.current) return;
+          const text = editorRef.current.innerText || "";
+          setWordCount(text.trim().length === 0 ? 0 : text.trim().split(/\s+/).length);
+          setCharCount(text.length);
+        };
+
+        const handleFormat = (command, value) => {
+          document.execCommand(command, false, value);
+          editorRef.current?.focus();
+          updateStats();
+        };
+
+        const handleAiAction = async (mode) => {
+          const selection = window.getSelection();
+          if (!selection || selection.rangeCount === 0 || selection.toString().trim().length === 0) {
+            alert("Please select some text to process with AI.");
+            return;
+          }
+          
+          const text = selection.toString();
+          setIsAiLoading(true);
+          
           try {
-            setStatus(EditorStatus.AI_THINKING);
-            const result = await generateAICompletion(content, prompt);
+            const result = await generateAiContent(text, mode);
             if (result) {
-              setContent(result);
-              addToast('AI Request completed.', 'success');
-            } else {
-              addToast('AI returned no content.', 'info');
+              document.execCommand('insertText', false, result);
             }
-            setStatus(EditorStatus.IDLE);
           } catch (e) {
-            console.error(e);
-            setStatus(EditorStatus.ERROR);
-            addToast('AI Connection Failed. Check console.', 'error');
+            console.error("AI Error:", e);
+            alert("Failed to generate AI content.");
+          } finally {
+            setIsAiLoading(false);
+            updateStats();
           }
         };
 
+        const toggleMaximize = () => setIsMaximized(!isMaximized);
+
+        const WinButton = ({ children, onClick, className = "", red = false }) => (
+          <button 
+            onClick={onClick}
+            className={`
+              flex items-center justify-center w-5 h-5 
+              border-t border-l border-b-black border-r-black 
+              active:border-t-black active:border-l-black active:border-b-cw-comment active:border-r-cw-comment
+              active:bg-cw-selection
+              ${red ? 'bg-cw-pink text-cw-bg' : 'bg-cw-panel border-cw-comment text-cw-comment'}
+              ${className}
+            `}
+          >
+            {children}
+          </button>
+        );
+
         return (
-          <div className="h-full flex flex-col bg-retro-bg text-retro-text font-code overflow-hidden relative">
-            <div className="fixed top-20 right-4 z-[70] flex flex-col gap-2 pointer-events-none">
-              {toasts.map(toast => (
-                <div key={toast.id} className={`pointer-events-auto px-4 py-3 rounded shadow-lg font-code text-sm transition-all duration-300 border ${toast.type === 'success' ? 'bg-retro-surface text-retro-green border-retro-green' : toast.type === 'error' ? 'bg-retro-surface text-retro-red border-retro-red' : 'bg-retro-surface text-retro-cyan border-retro-cyan'}`}>
-                  {toast.message}
+          <div className={`h-full w-full flex items-center justify-center p-4 bg-cw-bg font-sans transition-all duration-300 ${isMaximized ? 'p-0' : ''}`}>
+            
+            {/* Main Window */}
+            <div className={`
+              flex flex-col bg-cw-panel shadow-[10px_10px_0_0_rgba(0,0,0,0.5)]
+              border-2 border-t-cw-comment border-l-cw-comment border-b-black border-r-black
+              ${isMaximized ? 'w-full h-full' : 'w-full max-w-5xl h-[85vh]'}
+            `}>
+              
+              {/* Title Bar */}
+              <div className="h-8 bg-gradient-to-r from-cw-purple to-cw-pink flex items-center justify-between px-1 select-none">
+                <div className="flex items-center gap-2 px-1">
+                  <FileText size={16} className="text-cw-bg" />
+                  <span className="font-bold text-cw-bg text-sm tracking-wide">CodeWord 98 - Untitled.doc</span>
                 </div>
-              ))}
-            </div>
+                <div className="flex gap-1">
+                  <WinButton><Minus size={10} /></WinButton>
+                  <WinButton onClick={toggleMaximize}><Square size={10} /></WinButton>
+                  <WinButton red onClick={() => window.location.reload()}><X size={12} /></WinButton>
+                </div>
+              </div>
 
-            <Toolbar status={status} fileName={fileName} onSave={handleSave} onOpen={handleOpen} onAIClear={() => setContent('')} onAIAssist={() => setIsAIModalOpen(true)} wordCount={content.split(/\s+/).filter(Boolean).length} />
-
-            <main className="flex-1 flex flex-row min-h-0 relative">
-              <div ref={lineNumbersRef} className="bg-retro-bg w-14 flex-shrink-0 flex flex-col items-end py-4 px-3 select-none text-retro-comment text-sm border-r border-retro-surface overflow-hidden">
-                {Array.from({ length: Math.min(lines, 2000) }).map((_, i) => (
-                  <div key={i} className="leading-6 h-6">{i + 1}</div>
+              {/* Menu Bar */}
+              <div className="flex px-1 py-1 space-x-4 text-sm text-cw-text border-b border-cw-comment select-none">
+                {['File', 'Edit', 'View', 'Insert', 'Format', 'Tools', 'Table', 'Window', 'Help'].map(menu => (
+                  <span key={menu} className="px-1 cursor-pointer hover:bg-cw-selection hover:text-white first-letter:underline">
+                    {menu}
+                  </span>
                 ))}
               </div>
-              <textarea ref={textAreaRef} value={content} onChange={(e) => setContent(e.target.value)} onScroll={handleScroll} className="flex-1 w-full h-full bg-retro-bg text-retro-text p-4 resize-none focus:outline-none leading-6 font-code text-base selection:bg-retro-comment selection:text-white border-0" spellCheck={false} />
-            </main>
 
-            <StatusBar status={status} lines={lines} chars={chars} />
-            <AIPromptModal isOpen={isAIModalOpen} onClose={() => setIsAIModalOpen(false)} onSubmit={handleAIRequest} />
+              {/* Toolbar */}
+              <Toolbar 
+                onFormat={handleFormat} 
+                onAiAction={handleAiAction} 
+                isAiLoading={isAiLoading} 
+              />
+
+              {/* Ruler */}
+              <div className="h-6 bg-cw-panel border-b border-cw-comment flex items-end px-4 overflow-hidden relative">
+                <div className="w-full h-1/2 bg-cw-paper border border-cw-comment flex justify-between px-2">
+                  {[...Array(20)].map((_, i) => (
+                    <div key={i} className="h-full w-px bg-cw-comment opacity-50 text-[8px] pt-1">{i % 5 === 0 ? i : ''}</div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Editor Area */}
+              <div className="flex-1 bg-cw-selection/30 overflow-auto p-8 flex justify-center relative cursor-text" onClick={() => editorRef.current?.focus()}>
+                
+                {/* The Page */}
+                <div 
+                  className="bg-cw-paper w-full max-w-[800px] min-h-[1000px] shadow-2xl relative"
+                  style={{ fontFamily: '"Fira Code", monospace' }}
+                >
+                   {/* Content */}
+                   <div 
+                    ref={editorRef}
+                    contentEditable
+                    className="w-full h-full p-12 outline-none text-cw-text leading-relaxed whitespace-pre-wrap selection:bg-cw-pink selection:text-cw-bg"
+                    dangerouslySetInnerHTML={{ __html: INITIAL_CONTENT }}
+                    onInput={updateStats}
+                    spellCheck={false}
+                  />
+                </div>
+              </div>
+
+              {/* Status Bar */}
+              <div className="h-7 bg-cw-panel border-t border-cw-comment flex items-center justify-between px-3 text-xs text-cw-comment select-none">
+                <div className="flex gap-6">
+                  <span className="flex items-center gap-1">Page 1/1</span>
+                  <span className="flex items-center gap-1 border-l border-cw-selection pl-4">Sec 1</span>
+                  <span className="flex items-center gap-1 border-l border-cw-selection pl-4">{wordCount} words</span>
+                  <span className="flex items-center gap-1 border-l border-cw-selection pl-4">{charCount} chars</span>
+                </div>
+                <div className="flex gap-6">
+                  <span className="uppercase">OVR</span>
+                  <span className="uppercase text-cw-text font-bold">INS</span>
+                  <span>{currentTime}</span>
+                </div>
+              </div>
+            </div>
           </div>
         );
       };
 
-      try {
-        const rootElement = document.getElementById('root');
-        if (!rootElement) throw new Error("Root element not found");
-        const root = createRoot(rootElement);
-        root.render(<App />);
-      } catch (err) {
-        throw err; // Re-throw to be caught by window.onerror
-      }
+      // --- MOUNT ---
+      const root = createRoot(document.getElementById('root'));
+      root.render(<App />);
     </script>
   </body>
 </html>
