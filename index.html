@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Polyfill for process.env to prevent crashes on static hosts -->
+    <!-- Polyfill for process.env -->
     <script>
       window.process = { env: { API_KEY: '' } };
     </script>
@@ -73,7 +73,7 @@
       }
     </style>
     
-    <!-- STRICT IMPORT MAP - FIXED VERSIONS ONLY -->
+    <!-- CLEAN IMPORT MAP - SINGLE REACT VERSION -->
     <script type="importmap">
 {
   "imports": {
@@ -102,7 +102,7 @@
       <button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #44475a; color: white; border: none; cursor: pointer; border-radius: 4px; font-family: inherit;">Reload System</button>
     </div>
 
-    <!-- Watchdog Script to catch hangs -->
+    <!-- Watchdog Script -->
     <script>
       window.onerror = function(msg, url, line, col, error) {
         showError(`Error: ${msg}\nLine: ${line}`);
@@ -123,7 +123,7 @@
         }
       }
 
-      // Safety timeout: if app doesn't load in 5s, warn user
+      // Safety timeout: increased to 15s for slower connections
       setTimeout(() => {
         const root = document.getElementById('root');
         if (root && root.innerText.includes('Loading RetroWave Editor...')) {
@@ -134,10 +134,10 @@
              }
            }, 5000);
         }
-      }, 5000);
+      }, 10000);
     </script>
 
-    <!-- Application Code Bundled for GitHub Pages Compatibility -->
+    <!-- MAIN APPLICATION CODE -->
     <script type="text/babel" data-type="module">
       import React, { useState, useCallback, useRef, useEffect } from 'react';
       import { createRoot } from 'react-dom/client';
