@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Polyfill for process.env to prevent crashes -->
+    <!-- Polyfill for process.env -->
     <script>
       window.process = { env: { API_KEY: '' } };
     </script>
@@ -46,7 +46,7 @@
         height: 100%;
         margin: 0;
         padding: 0;
-        overflow: hidden; /* Prevent body scroll, let app handle it */
+        overflow: hidden;
         background-color: #1e1e2e;
         color: #f8f8f2;
       }
@@ -68,16 +68,17 @@
         height: 100%;
         color: #8be9fd;
         font-family: 'Fira Code', monospace;
+        transition: opacity 0.5s ease;
       }
     </style>
     
-    <!-- Clean Import Map without conflicts -->
+    <!-- STRICT IMPORT MAP - NO CONFLICTS -->
     <script type="importmap">
 {
   "imports": {
     "react": "https://esm.sh/react@18.2.0",
     "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-    "lucide-react": "https://esm.sh/lucide-react@0.292.0",
+    "lucide-react": "https://esm.sh/lucide-react@0.292.0?deps=react@18.2.0",
     "@google/genai": "https://esm.sh/@google/genai@0.1.1",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "react/": "https://aistudiocdn.com/react@^19.2.0/"
@@ -87,42 +88,59 @@
 </head>
   <body>
     <div id="root">
-      <div class="loading-screen">
+      <div id="loading-ui" class="loading-screen">
         <p>Loading RetroWave Editor...</p>
-        <p style="font-size: 0.8em; color: #6272a4; margin-top: 10px;">Initializing interface...</p>
+        <p style="font-size: 0.8em; color: #6272a4; margin-top: 10px;">Initializing environment...</p>
       </div>
     </div>
     
-    <!-- Error Container -->
+    <!-- Error Overlay -->
     <div id="error-container" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1e1e2e; color: #ff5555; padding: 20px; font-family: monospace; z-index: 9999;">
-      <h2 style="margin-top: 0; color: #ff5555;">Application Error</h2>
-      <pre id="error-message" style="white-space: pre-wrap; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px;"></pre>
-      <button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #44475a; color: white; border: none; cursor: pointer; border-radius: 4px;">Reload</button>
+      <h2 style="margin-top: 0; color: #ff5555;">System Error</h2>
+      <pre id="error-message" style="white-space: pre-wrap; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; border: 1px solid #44475a;"></pre>
+      <button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #44475a; color: white; border: none; cursor: pointer; border-radius: 4px; font-family: inherit;">Reload System</button>
     </div>
 
-    <!-- Error Catcher -->
+    <!-- Watchdog Script to catch hangs -->
     <script>
-      window.addEventListener('error', function(event) {
-        const container = document.getElementById('error-container');
-        const message = document.getElementById('error-message');
-        if (container && message) {
-          container.style.display = 'block';
-          message.textContent = event.message || 'Unknown error occurred';
-          console.error('Global Error:', event.error);
+      // Global error handlers
+      window.onerror = function(msg, url, line, col, error) {
+        showError(`Error: ${msg}\nLine: ${line}`);
+        return false;
+      };
+      
+      window.onunhandledrejection = function(e) {
+        showError(`Promise Rejection: ${e.reason}`);
+      };
+
+      function showError(msg) {
+        const el = document.getElementById('error-container');
+        const txt = document.getElementById('error-message');
+        if (el && txt) {
+          el.style.display = 'block';
+          txt.textContent = msg;
+          document.getElementById('loading-ui').style.display = 'none';
         }
-      });
-      window.addEventListener('unhandledrejection', function(event) {
-        const container = document.getElementById('error-container');
-        const message = document.getElementById('error-message');
-        if (container && message) {
-          container.style.display = 'block';
-          message.textContent = 'Promise Rejection: ' + (event.reason?.message || event.reason);
-          console.error('Unhandled Rejection:', event.reason);
+      }
+
+      // Timeout watchdog
+      setTimeout(() => {
+        const root = document.getElementById('root');
+        // If the loading text is still there, we assume the app failed to mount silently
+        if (root && root.innerText.includes('Loading RetroWave Editor...')) {
+           console.warn("Mount timeout reached.");
+           // We don't block immediately in case of slow network, but we log it.
+           // If it persists for 8 seconds, we show error.
+           setTimeout(() => {
+             if (root && root.innerText.includes('Loading RetroWave Editor...')) {
+               showError("Initialization Timeout.\nThe application took too long to start.\n\nPossible causes:\n1. Network firewall blocking 'esm.sh'.\n2. Browser extensions interfering with scripts.\n\nCheck the browser console (F12) for details.");
+             }
+           }, 4000);
         }
-      });
+      }, 4000);
     </script>
 
-    <!-- Main Application Script -->
+    <!-- Application Code -->
     <script type="text/babel" data-type="module">
       import React, { useState, useCallback, useRef, useEffect } from 'react';
       import { createRoot } from 'react-dom/client';
@@ -144,7 +162,6 @@
         
         if (!apiKey) {
           console.warn("API Key not found.");
-          // Simulated delay for UX
           await new Promise(resolve => setTimeout(resolve, 800));
           return currentText + "\n\n// [System]: API Key missing.\n// Please configure process.env.API_KEY to use AI features.";
         }
@@ -415,9 +432,7 @@ function helloWorld() {
         const root = createRoot(rootElement);
         root.render(<App />);
       } catch (err) {
-        console.error("Mount Error:", err);
-        document.getElementById('error-container').style.display = 'block';
-        document.getElementById('error-message').textContent = err.toString();
+        throw err; // Re-throw to be caught by window.onerror
       }
     </script>
   </body>
