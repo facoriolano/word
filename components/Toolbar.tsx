@@ -18,8 +18,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onSave, 
   onOpen, 
   onAIClear, 
-  onAIAssist,
-  wordCount
+  onAIAssist
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -34,9 +33,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   return (
-    <div className="bg-retro-bg border-b border-retro-surface flex flex-col md:flex-row items-center justify-between p-3 sticky top-0 z-40">
+    <div className="bg-retro-bg border-b border-retro-surface flex flex-col md:flex-row items-center justify-between p-3 sticky top-0 z-40 shadow-sm">
       <div className="flex items-center gap-4 mb-2 md:mb-0">
-        <div className="flex items-center gap-2 text-retro-pink font-code text-xl font-bold">
+        <div className="flex items-center gap-2 text-retro-pink font-code text-lg font-bold">
           <Terminal className="w-5 h-5" />
           <span>RetroWave</span>
         </div>
@@ -56,46 +55,46 @@ const Toolbar: React.FC<ToolbarProps> = ({
 
         <button 
           onClick={() => fileInputRef.current?.click()}
-          className="group px-3 py-1.5 bg-retro-surface rounded text-retro-cyan font-code text-xs font-medium hover:bg-retro-cyan hover:text-retro-bg transition-colors"
+          className="group px-4 py-2 bg-retro-surface rounded-md text-retro-cyan font-code text-sm font-medium hover:bg-retro-cyan hover:text-retro-bg transition-all"
           disabled={status === EditorStatus.AI_THINKING}
         >
           <span className="flex items-center gap-2">
-            <FolderOpen className="w-3.5 h-3.5" /> Open
+            <FolderOpen className="w-4 h-4" /> Open
           </span>
         </button>
 
         <button 
           onClick={onSave}
-          className="group px-3 py-1.5 bg-retro-surface rounded text-retro-green font-code text-xs font-medium hover:bg-retro-green hover:text-retro-bg transition-colors"
+          className="group px-4 py-2 bg-retro-surface rounded-md text-retro-green font-code text-sm font-medium hover:bg-retro-green hover:text-retro-bg transition-all"
           disabled={status === EditorStatus.AI_THINKING}
         >
           <span className="flex items-center gap-2">
-            <Save className="w-3.5 h-3.5" /> Save
+            <Save className="w-4 h-4" /> Save
           </span>
         </button>
         
-        <div className="h-5 w-[1px] bg-retro-surface mx-1"></div>
+        <div className="h-6 w-[1px] bg-retro-surface mx-1"></div>
 
         <button 
           onClick={onAIClear}
-          className="group px-3 py-1.5 bg-retro-surface rounded text-retro-red font-code text-xs font-medium hover:bg-retro-red hover:text-retro-bg transition-colors"
+          className="group px-4 py-2 bg-retro-surface rounded-md text-retro-red font-code text-sm font-medium hover:bg-retro-red hover:text-retro-bg transition-all"
           disabled={status === EditorStatus.AI_THINKING}
         >
           <span className="flex items-center gap-2">
-            <Eraser className="w-3.5 h-3.5" /> Clear
+            <Eraser className="w-4 h-4" /> Clear
           </span>
         </button>
 
         <button 
           onClick={onAIAssist}
-          className={`group px-3 py-1.5 rounded font-code text-xs font-medium transition-colors flex items-center gap-2
+          className={`group px-4 py-2 rounded-md font-code text-sm font-medium transition-all flex items-center gap-2 shadow-sm
             ${status === EditorStatus.AI_THINKING 
               ? 'bg-retro-pink text-retro-bg cursor-wait opacity-80' 
-              : 'bg-retro-pink text-retro-bg hover:opacity-90'
+              : 'bg-retro-pink text-retro-bg hover:bg-retro-pink/90'
             }`}
           disabled={status === EditorStatus.AI_THINKING}
         >
-          <Wand2 className={`w-3.5 h-3.5 ${status === EditorStatus.AI_THINKING ? 'animate-spin' : ''}`} />
+          <Wand2 className={`w-4 h-4 ${status === EditorStatus.AI_THINKING ? 'animate-spin' : ''}`} />
           {status === EditorStatus.AI_THINKING ? 'Working...' : 'AI Assist'}
         </button>
       </div>
