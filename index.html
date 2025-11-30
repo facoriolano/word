@@ -1,371 +1,78 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Editor Retro – Salve suas metas</title>
-<style>
-  body {
-    margin: 0;
-    background-color: #000080;
-    font-family: 'Courier New', Courier, monospace;
-    color: #ffffffcc;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
-  .menu-bar {
-    background: linear-gradient(90deg, #0080ff, #004080);
-    color: white;
-    font-weight: bold;
-    display: flex;
-    gap: 1rem;
-    padding: 0.4rem 1rem;
-    user-select: none;
-    border-bottom: 2px solid #000040;
-    font-size: 0.9rem;
-    position: relative;
-  }
-  .menu-item {
-    position: relative;
-    cursor: pointer;
-    padding: 0.2rem 0.6rem;
-    border-radius: 3px;
-  }
-  .menu-item:hover, .menu-item.active {
-    background-color: #003080;
-  }
-  .dropdown {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    background-color: #002060;
-    border: 1px solid #001040;
-    min-width: 150px;
-    z-index: 100;
-    box-shadow: 0 2px 6px #000;
-  }
-  .dropdown .dropdown-item {
-    padding: 0.4rem 0.8rem;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-  .dropdown .dropdown-item:hover {
-    background-color: #0040c0;
-  }
-  #status {
-    color: #90f090;
-    font-weight: bold;
-    font-family: monospace;
-    min-width: 140px;
-    text-align: right;
-    margin-left: auto;
-    align-self: center;
-    user-select: none;
-  }
-  #editor {
-    flex-grow: 1;
-    background-color: #000080;
-    color: #e0e0ff;
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 1rem;
-    line-height: 1.4;
-    padding: 1rem;
-    border: none;
-    resize: none;
-    outline: none;
-    overflow-y: auto;
-    white-space: pre-wrap;
-    tab-size: 4;
-  }
-  #editor::placeholder {
-    color: #a0a0c0;
-    font-style: italic;
-  }
-  #editor::-webkit-scrollbar {
-    width: 12px;
-  }
-  #editor::-webkit-scrollbar-track {
-    background: #000040;
-  }
-  #editor::-webkit-scrollbar-thumb {
-    background-color: #8080ff;
-    border-radius: 6px;
-    border: 3px solid #000040;
-  }
-</style>
-</head>
-<body>
-
-  <div class="menu-bar" id="menuBar">
-    <div class="menu-item" data-menu="file">File
-      <div class="dropdown" id="fileMenu">
-        <div class="dropdown-item" data-action="new">New</div>
-        <div class="dropdown-item" data-action="open">Open</div>
-        <div class="dropdown-item" data-action="save">Save</div>
-        <div class="dropdown-item" data-action="clear">Clear</div>
-      </div>
-    </div>
-    <div class="menu-item" data-menu="edit">Edit
-      <div class="dropdown" id="editMenu">
-        <div class="dropdown-item" data-action="undo">Undo</div>
-        <div class="dropdown-item" data-action="redo">Redo</div>
-        <div class="dropdown-item" data-action="cut">Cut</div>
-        <div class="dropdown-item" data-action="copy">Copy</div>
-        <div class="dropdown-item" data-action="paste">Paste</div>
-        <div class="dropdown-item" data-action="selectAll">Select All</div>
-        <div class="dropdown-item" data-action="clear">Clear</div>
-      </div>
-    </div>
-    <div class="menu-item" data-menu="view">View
-      <div class="dropdown" id="viewMenu">
-        <div class="dropdown-item" data-action="toggleWordWrap">Toggle Word Wrap</div>
-        <div class="dropdown-item" data-action="toggleDarkMode">Toggle Dark Mode</div>
-      </div>
-    </div>
-    <div id="status"></div>
-  </div>
-
-  <textarea id="editor" placeholder="Escreva suas metas para 2025 aqui..."></textarea>
-
-<script>
-  const editor = document.getElementById("editor");
-  const statusEl = document.getElementById("status");
-
-  // Dropdown menus
-  const menuBar = document.getElementById("menuBar");
-  let activeMenu = null;
-
-  // Word wrap state
-  let wordWrap = true;
-
-  // Dark mode state
-  let darkMode = false;
-
-  // Show/hide dropdown on menu click
-  menuBar.querySelectorAll(".menu-item").forEach(menuItem => {
-    menuItem.addEventListener("click", (e) => {
-      const target = e.currentTarget;
-      const menuName = target.dataset.menu;
-      if (activeMenu && activeMenu !== menuName) {
-        closeDropdown(activeMenu);
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RetroWave Editor</title>
+    <meta name="description" content="Smooth Text Editor" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              retro: {
+                bg: '#1e1e2e',       // Dark Background
+                surface: '#2a2b3d',  // Editor Surface
+                pink: '#ff79c6',     // Accent 1
+                cyan: '#8be9fd',     // Accent 2
+                green: '#50fa7b',    // Accent 3
+                yellow: '#f1fa8c',   // Accent 4
+                comment: '#6272a4',  // Gray/Purple text
+                text: '#f8f8f2',     // Main text
+                red: '#ff5555'       // Error
+              }
+            },
+            fontFamily: {
+              code: ['"Fira Code"', 'monospace'],
+              // Removing pixel font for smooth look, mapping retro to code or sans if needed, 
+              // but purely using code font is cleaner for editors.
+              sans: ['"Fira Code"', 'sans-serif'],
+            }
+          }
+        }
       }
-      if (target.classList.contains("active")) {
-        closeDropdown(menuName);
-      } else {
-        openDropdown(menuName);
+    </script>
+    <style>
+      /* Custom Scrollbar for Webkit - Smooth minimal style */
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
       }
-    });
-  });
-
-  function openDropdown(menuName) {
-    const menuItem = document.querySelector(`.menu-item[data-menu="${menuName}"]`);
-    if (!menuItem) return;
-    const dropdown = menuItem.querySelector(".dropdown");
-    if (!dropdown) return;
-    dropdown.style.display = "block";
-    menuItem.classList.add("active");
-    activeMenu = menuName;
-  }
-  function closeDropdown(menuName) {
-    const menuItem = document.querySelector(`.menu-item[data-menu="${menuName}"]`);
-    if (!menuItem) return;
-    const dropdown = menuItem.querySelector(".dropdown");
-    if (!dropdown) return;
-    dropdown.style.display = "none";
-    menuItem.classList.remove("active");
-    if (activeMenu === menuName) activeMenu = null;
-  }
-
-  // Fecha dropdown ao clicar fora
-  document.addEventListener("click", (e) => {
-    if (!menuBar.contains(e.target) && activeMenu) {
-      closeDropdown(activeMenu);
-    }
-  });
-
-  // Undo/Redo stacks simples
-  let undoStack = [];
-  let redoStack = [];
-  let isTyping = false;
-
-  const saveState = () => {
-    if (undoStack.length === 0 || undoStack[undoStack.length - 1] !== editor.value) {
-      undoStack.push(editor.value);
-      if (undoStack.length > 100) undoStack.shift();
-      redoStack = [];
-    }
-  };
-
-  editor.addEventListener("input", () => {
-    if (!isTyping) {
-      saveState();
-      isTyping = true;
-    }
-  });
-  editor.addEventListener("keyup", () => {
-    isTyping = false;
-  });
-
-  // Eventos para os itens dos menus
-  document.querySelectorAll(".dropdown-item").forEach(item => {
-    item.addEventListener("click", (e) => {
-      const action = e.currentTarget.dataset.action;
-      if (action) {
-        handleMenuAction(action);
-        if (activeMenu) closeDropdown(activeMenu);
+      ::-webkit-scrollbar-track {
+        background: #1e1e2e; 
       }
-    });
-  });
-
-  function handleMenuAction(action) {
-    switch (action) {
-      // FILE
-      case "new":
-        if (confirm("Criar novo arquivo? O conteúdo atual será perdido.")) {
-          editor.value = "";
-          clearStatus();
-          saveState();
-        }
-        break;
-      case "open":
-        openFileDialog();
-        break;
-      case "save":
-        saveToFile();
-        break;
-      case "clear":
-        if (confirm("Limpar editor?")) {
-          editor.value = "";
-          clearStatus();
-          saveState();
-        }
-        break;
-
-      // EDIT
-      case "undo":
-        if (undoStack.length > 1) {
-          redoStack.push(undoStack.pop());
-          editor.value = undoStack[undoStack.length - 1];
-          setStatus("Undo");
-        } else {
-          setStatus("Nada para desfazer");
-        }
-        break;
-      case "redo":
-        if (redoStack.length > 0) {
-          const val = redoStack.pop();
-          editor.value = val;
-          undoStack.push(val);
-          setStatus("Redo");
-        } else {
-          setStatus("Nada para refazer");
-        }
-        break;
-      case "cut":
-        document.execCommand("cut");
-        setStatus("Cortado");
-        break;
-      case "copy":
-        document.execCommand("copy");
-        setStatus("Copiado");
-        break;
-      case "paste":
-        document.execCommand("paste");
-        setStatus("Colado");
-        break;
-      case "selectAll":
-        editor.select();
-        setStatus("Selecionado tudo");
-        break;
-
-      // VIEW
-      case "toggleWordWrap":
-        wordWrap = !wordWrap;
-        editor.style.whiteSpace = wordWrap ? "pre-wrap" : "pre";
-        setStatus(`Quebra de linha: ${wordWrap ? "ligada" : "desligada"}`);
-        break;
-      case "toggleDarkMode":
-        darkMode = !darkMode;
-        if (darkMode) {
-          document.body.style.backgroundColor = "#222222";
-          editor.style.backgroundColor = "#111111";
-          editor.style.color = "#eeeeee";
-          document.querySelector(".menu-bar").style.background = "linear-gradient(90deg, #555555, #222222)";
-          statusEl.style.color = "#aaffaa";
-        } else {
-          document.body.style.backgroundColor = "#000080";
-          editor.style.backgroundColor = "#000080";
-          editor.style.color = "#e0e0ff";
-          document.querySelector(".menu-bar").style.background = "linear-gradient(90deg, #0080ff, #004080)";
-          statusEl.style.color = "#90f090";
-        }
-        setStatus(`Modo escuro: ${darkMode ? "ativado" : "desativado"}`);
-        break;
-
-      default:
-        setStatus(`Ação "${action}" não implementada`);
-    }
+      ::-webkit-scrollbar-thumb {
+        background: #44475a; 
+        border-radius: 5px;
+        border: 2px solid #1e1e2e;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #6272a4; 
+      }
+      
+      body {
+        background-color: #1e1e2e;
+        color: #f8f8f2;
+        font-family: 'Fira Code', monospace;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0"
   }
-
-  // Funções para salvar e abrir arquivos localmente
-
-  function saveToFile() {
-    const blob = new Blob([editor.value], {type: "text/plain;charset=utf-8"});
-    const filename = "metas-2025.txt";
-
-    if (window.navigator.msSaveOrOpenBlob) {
-      // IE fallback
-      window.navigator.msSaveOrOpenBlob(blob, filename);
-    } else {
-      const a = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }, 0);
-      setStatus("Arquivo salvo");
-    }
-  }
-
-  function openFileDialog() {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "text/plain";
-    input.onchange = (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        editor.value = reader.result;
-        saveState();
-        setStatus(`Arquivo "${file.name}" aberto`);
-      };
-      reader.readAsText(file);
-    };
-    input.click();
-  }
-
-  // Status
-
-  function setStatus(msg) {
-    statusEl.textContent = msg;
-    clearTimeout(statusEl._timeout);
-    statusEl._timeout = setTimeout(() => {
-      clearStatus();
-    }, 3000);
-  }
-  function clearStatus() {
-    statusEl.textContent = "";
-  }
-
-  // Inicializa estado
-  saveState();
+}
 </script>
-</body>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
 </html>
