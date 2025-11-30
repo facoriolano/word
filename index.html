@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Polyfill for process.env -->
+    <!-- Polyfill for process.env to prevent crashes on static hosts -->
     <script>
       window.process = { env: { API_KEY: '' } };
     </script>
@@ -55,6 +55,7 @@
         display: flex;
         flex-direction: column;
       }
+      /* Custom Scrollbar */
       ::-webkit-scrollbar { width: 10px; height: 10px; }
       ::-webkit-scrollbar-track { background: #1e1e2e; }
       ::-webkit-scrollbar-thumb { background: #44475a; border-radius: 5px; border: 2px solid #1e1e2e; }
@@ -72,7 +73,7 @@
       }
     </style>
     
-    <!-- STRICT IMPORT MAP - NO CONFLICTS -->
+    <!-- STRICT IMPORT MAP - FIXED VERSIONS ONLY -->
     <script type="importmap">
 {
   "imports": {
@@ -90,7 +91,7 @@
     <div id="root">
       <div id="loading-ui" class="loading-screen">
         <p>Loading RetroWave Editor...</p>
-        <p style="font-size: 0.8em; color: #6272a4; margin-top: 10px;">Initializing environment...</p>
+        <p style="font-size: 0.8em; color: #6272a4; margin-top: 10px;">Initializing interface...</p>
       </div>
     </div>
     
@@ -103,7 +104,6 @@
 
     <!-- Watchdog Script to catch hangs -->
     <script>
-      // Global error handlers
       window.onerror = function(msg, url, line, col, error) {
         showError(`Error: ${msg}\nLine: ${line}`);
         return false;
@@ -123,31 +123,28 @@
         }
       }
 
-      // Timeout watchdog
+      // Safety timeout: if app doesn't load in 5s, warn user
       setTimeout(() => {
         const root = document.getElementById('root');
-        // If the loading text is still there, we assume the app failed to mount silently
         if (root && root.innerText.includes('Loading RetroWave Editor...')) {
            console.warn("Mount timeout reached.");
-           // We don't block immediately in case of slow network, but we log it.
-           // If it persists for 8 seconds, we show error.
            setTimeout(() => {
              if (root && root.innerText.includes('Loading RetroWave Editor...')) {
-               showError("Initialization Timeout.\nThe application took too long to start.\n\nPossible causes:\n1. Network firewall blocking 'esm.sh'.\n2. Browser extensions interfering with scripts.\n\nCheck the browser console (F12) for details.");
+               showError("Initialization Timeout.\n\nPossible causes:\n1. Network blocking 'esm.sh' scripts.\n2. Browser extensions interfering.\n\nPlease check your internet connection.");
              }
-           }, 4000);
+           }, 5000);
         }
-      }, 4000);
+      }, 5000);
     </script>
 
-    <!-- Application Code -->
+    <!-- Application Code Bundled for GitHub Pages Compatibility -->
     <script type="text/babel" data-type="module">
       import React, { useState, useCallback, useRef, useEffect } from 'react';
       import { createRoot } from 'react-dom/client';
       import { Save, FolderOpen, Wand2, Terminal, Eraser, Sparkles, X } from 'lucide-react';
       import { GoogleGenAI } from '@google/genai';
 
-      // --- Types & Constants ---
+      // --- Constants ---
       const EditorStatus = {
         IDLE: 'IDLE',
         SAVING: 'SAVING',
@@ -170,11 +167,11 @@
           const ai = new GoogleGenAI({ apiKey });
           const model = 'gemini-2.5-flash';
           const prompt = `
-            You are a helpful coding assistant integrated into a modern text editor.
+            You are a helpful coding assistant.
             User Instruction: ${instruction}
             Current File Content:
             ${currentText}
-            Return ONLY the updated or completed text content. Do not include markdown blocks unless requested.
+            Return ONLY the updated or completed text content.
           `;
 
           const response = await ai.models.generateContent({
