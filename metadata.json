@@ -1,5 +1,5 @@
 {
-  "name": "RetroWave Editor",
-  "description": "A clean, smooth text editor with syntax highlighting aesthetics and AI capabilities.",
+  "name": "Slide Presenter AI",
+  "description": "A dual-screen slide presentation tool. Edit text decks separated by '---', preview slides, and project to a second window. Features AI deck generation.",
   "requestFramePermissions": []
 }
