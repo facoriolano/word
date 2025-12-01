@@ -3,25 +3,30 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Retro Code Editor</title>
+    <meta name="description" content="Editor de texto estilo Retro 80s com tema Dracula e Inteligência Artificial." />
+    <title>NeonCode | Retro 80s Editor</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
       body {
-        background-color: #111;
+        background-color: #21222c; /* Dracula Background Darker */
         margin: 0;
         font-family: 'Fira Code', monospace;
+        color: #f8f8f2;
       }
       
-      /* Custom Scrollbar for that retro feel */
+      /* Custom Scrollbar - Dracula Theme */
       ::-webkit-scrollbar {
-        width: 12px;
+        width: 14px;
         background: #282a36;
       }
       ::-webkit-scrollbar-thumb {
-        background: #bd93f9; 
-        border: 2px solid #282a36;
-        border-radius: 4px;
+        background: #6272a4; 
+        border: 3px solid #282a36;
+        border-radius: 8px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #bd93f9;
       }
 
       /* CRT Animation Keyframes */
@@ -53,6 +58,7 @@
         );
         background-size: 100% 4px;
         pointer-events: none;
+        z-index: 40;
       }
     </style>
   <script type="importmap">
