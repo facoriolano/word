@@ -1,377 +1,171 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Retro TXT Editor</title>
-<style>
-  :root {
-    /* Paleta e estilo retrô */
-    --bg: #0a0f0a;            /* fundo quase preto */
-    --phosphor: #4cff4c;      /* verde fosforo */
-    --phosphor-dim: #2ea82e;  /* verde mais escuro */
-    --frame: #132113;         /* moldura */
-    --accent: #1f351f;        /* destaque sutil */
-    --shadow: rgba(0,0,0,0.45);
-  }
-
-  /* Reset minimalista */
-  * { box-sizing: border-box; }
-  html, body {
-    height: 100%;
-    margin: 0;
-    background: radial-gradient(1200px 600px at 50% 30%, #0d140d 0%, var(--bg) 60%, #060806 100%);
-    color: var(--phosphor);
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  }
-
-  /* Centro responsivo */
-  .wrap {
-    max-width: 960px;
-    margin: 24px auto;
-    padding: 0 16px;
-  }
-
-  /* Janela retrô */
-  .window {
-    background: linear-gradient(#0b120b, #0a100a);
-    border: 2px solid var(--frame);
-    border-radius: 16px;
-    box-shadow:
-      0 12px 30px var(--shadow),
-      inset 0 0 0 1px #0f170f,
-      inset 0 0 22px rgba(76,255,76,0.06);
-    overflow: hidden;
-    position: relative;
-  }
-
-  /* Barra de título */
-  .titlebar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: linear-gradient(180deg, #122012 0%, #0e170e 100%);
-    border-bottom: 2px solid var(--frame);
-    padding: 10px 12px;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    font-weight: 700;
-    color: var(--phosphor);
-  }
-  .leds {
-    display: flex;
-    gap: 8px;
-    margin-right: 8px;
-  }
-  .led {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    box-shadow: 0 0 8px rgba(76,255,76,0.6);
-    background: radial-gradient(circle at 30% 30%, var(--phosphor) 0%, var(--phosphor-dim) 60%, #0b0f0b 100%);
-  }
-  .title {
-    flex: 1;
-  }
-
-  /* Área de botões e status */
-  .toolbar {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 12px;
-    padding: 10px 12px;
-    border-bottom: 1px dashed #163016;
-  }
-  .controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  .status {
-    text-align: right;
-    color: #8ee98e;
-    font-size: 12px;
-    opacity: 0.9;
-  }
-
-  /* Botões retrô */
-  .btn {
-    appearance: none;
-    border: 1px solid #1b2f1b;
-    background: linear-gradient(180deg, #112111 0%, #0e1b0e 100%);
-    color: var(--phosphor);
-    padding: 8px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    text-transform: uppercase;
-    font-weight: 700;
-    letter-spacing: 0.6px;
-    box-shadow:
-      0 2px 0 #061006,
-      inset 0 0 12px rgba(76,255,76,0.08);
-    transition: transform 0.02s ease, box-shadow 0.12s ease;
-  }
-  .btn:hover {
-    box-shadow:
-      0 2px 0 #061006,
-      inset 0 0 18px rgba(76,255,76,0.14);
-  }
-  .btn:active {
-    transform: translateY(1px);
-  }
-
-  /* Input retrô */
-  .input, .file {
-    background: #0b130b;
-    border: 1px solid #1b2f1b;
-    color: var(--phosphor);
-    padding: 8px 10px;
-    border-radius: 8px;
-    box-shadow: inset 0 0 10px rgba(76,255,76,0.06);
-    font-weight: 600;
-  }
-  .file {
-    padding: 6px;
-  }
-
-  /* Editor de texto com efeito CRT */
-  .editor {
-    position: relative;
-    padding: 16px;
-    min-height: 60vh;
-    border-top: 1px dashed #163016;
-  }
-  textarea {
-    width: 100%;
-    height: 55vh;
-    min-height: 300px;
-    resize: vertical;
-    background: #091109;
-    color: var(--phosphor);
-    border: 2px solid #102010;
-    border-radius: 12px;
-    padding: 14px 16px;
-    line-height: 1.6;
-    font-size: 16px;
-    text-shadow: 0 0 2px rgba(76,255,76,0.25);
-    box-shadow:
-      inset 0 0 20px rgba(76,255,76,0.08),
-      inset 0 0 2px #0d190d;
-    outline: none;
-  }
-  textarea:focus {
-    border-color: #1f351f;
-    box-shadow:
-      inset 0 0 26px rgba(76,255,76,0.12),
-      0 0 0 2px rgba(76,255,76,0.08);
-  }
-
-  /* Scanlines + glow */
-  .crt-overlay::before,
-  .crt-overlay::after {
-    content: "";
-    pointer-events: none;
-    position: absolute;
-    left: 0; top: 0; right: 0; bottom: 0;
-    border-radius: 12px;
-  }
-  .crt-overlay::before {
-    background-image:
-      linear-gradient(rgba(0,0,0,0.15), rgba(0,0,0,0.15)),
-      repeating-linear-gradient(
-        to bottom,
-        rgba(76,255,76,0.08) 0px,
-        rgba(76,255,76,0.08) 1px,
-        transparent 2px,
-        transparent 3px
-      );
-    mix-blend-mode: multiply;
-  }
-  .crt-overlay::after {
-    box-shadow: inset 0 0 80px rgba(76,255,76,0.08);
-  }
-
-  /* Rodapé */
-  .footer {
-    padding: 10px 12px 14px;
-    border-top: 1px dashed #163016;
-    font-size: 12px;
-    color: #8ee98e;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .tip {
-    opacity: 0.85;
-  }
-
-  /* Arrastar e soltar */
-  .drop {
-    border: 2px dashed #1b2f1b;
-    border-radius: 12px;
-    padding: 12px;
-    text-align: center;
-    color: #8ee98e;
-    transition: background 0.12s ease, border-color 0.12s ease;
-  }
-  .drop.active {
-    background: rgba(76,255,76,0.06);
-    border-color: var(--phosphor);
-    color: var(--phosphor);
-  }
-
-  /* Responsivo */
-  @media (max-width: 640px) {
-    .toolbar { grid-template-columns: 1fr; }
-    textarea { height: 50vh; }
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Editor Retrô</title>
+  <style>
+    /* Estilo retrô CRT */
+    :root {
+      --bg: #0a0f0a;
+      --phosphor: #4cff4c;
+      --phosphor-dim: #2ea82e;
+      --frame: #132113;
+      --accent: #1f351f;
+      --shadow: rgba(0,0,0,0.45);
+    }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 600px at 50% 30%, #0d140d 0%, var(--bg) 60%, #060806 100%);
+      color: var(--phosphor);
+      font-family: monospace;
+    }
+    .window {
+      max-width: 800px;
+      margin: 40px auto;
+      border: 2px solid var(--frame);
+      border-radius: 16px;
+      box-shadow: 0 12px 30px var(--shadow), inset 0 0 0 1px #0f170f, inset 0 0 22px rgba(76,255,76,0.06);
+      background: linear-gradient(#0b120b, #0a100a);
+      overflow: hidden;
+    }
+    .titlebar {
+      display: flex;
+      align-items: center;
+      padding: 10px 16px;
+      background: linear-gradient(180deg, #122012 0%, #0e170e 100%);
+      border-bottom: 2px solid var(--frame);
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .leds span {
+      width: 10px;
+      height: 10px;
+      margin-right: 8px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, var(--phosphor) 0%, var(--phosphor-dim) 60%, #0b0f0b 100%);
+      box-shadow: 0 0 8px rgba(76,255,76,0.6);
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 12px 16px;
+      border-bottom: 1px dashed #163016;
+    }
+    .btn, .input, .file {
+      background: #0b130b;
+      border: 1px solid #1b2f1b;
+      color: var(--phosphor);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-weight: bold;
+      text-transform: uppercase;
+      box-shadow: inset 0 0 10px rgba(76,255,76,0.06);
+    }
+    .btn:hover {
+      box-shadow: inset 0 0 18px rgba(76,255,76,0.14);
+      cursor: pointer;
+    }
+    .editor {
+      position: relative;
+      padding: 16px;
+    }
+    textarea {
+      width: 100%;
+      height: 400px;
+      background: #091109;
+      color: var(--phosphor);
+      border: 2px solid #102010;
+      border-radius: 12px;
+      padding: 14px 16px;
+      line-height: 1.6;
+      font-size: 16px;
+      text-shadow: 0 0 2px rgba(76,255,76,0.25);
+      box-shadow: inset 0 0 20px rgba(76,255,76,0.08), inset 0 0 2px #0d190d;
+      outline: none;
+    }
+    .footer {
+      padding: 10px 16px;
+      border-top: 1px dashed #163016;
+      font-size: 12px;
+      color: #8ee98e;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="window">
-      <div class="titlebar">
-        <div class="leds"><span class="led"></span><span class="led"></span><span class="led"></span></div>
-        <div class="title">RETRO TXT EDITOR</div>
-        <button class="btn" id="newBtn" title="Novo arquivo">Novo</button>
-      </div>
+  <div class="window">
+    <div class="titlebar">
+      <div class="leds"><span></span><span></span><span></span></div>
+      <div>Editor Retrô TXT</div>
+    </div>
 
-      <div class="toolbar">
-        <div class="controls">
-          <input type="file" class="file" id="fileInput" accept=".txt,text/plain" />
-          <input type="text" class="input" id="filename" placeholder="nome-do-arquivo.txt" />
-          <button class="btn" id="openBtn">Abrir</button>
-          <button class="btn" id="saveBtn">Salvar</button>
-          <button class="btn" id="downloadBtn">Baixar .txt</button>
-        </div>
-        <div class="status" id="status">Pronto</div>
-      </div>
+    <div class="toolbar">
+      <input type="file" class="file" id="fileInput" accept=".txt" />
+      <input type="text" class="input" id="filename" placeholder="nome-do-arquivo.txt" />
+      <button class="btn" onclick="saveLocal()">Salvar</button>
+      <button class="btn" onclick="downloadFile()">Baixar</button>
+    </div>
 
-      <div class="editor">
-        <div class="drop" id="dropZone">Arraste e solte um arquivo .txt aqui</div>
-        <div class="crt-overlay">
-          <textarea id="text" spellcheck="false" placeholder="Digite seu texto retrô aqui..."></textarea>
-        </div>
-      </div>
+    <div class="editor">
+      <textarea id="editor" placeholder="Digite seu texto retrô aqui..."></textarea>
+    </div>
 
-      <div class="footer">
-        <div class="tip">Dica: use “Salvar” para armazenamento local e “Baixar .txt” para salvar no seu computador.</div>
-        <div>v1.0 • Retro Mode</div>
-      </div>
+    <div class="footer">
+      <div>Dica: salve localmente ou baixe como .txt</div>
+      <div>v1.0 • CRT Style</div>
     </div>
   </div>
 
-<script>
-  // Utilidades
-  const $ = (sel) => document.querySelector(sel);
-  const statusEl = $("#status");
-  const textEl = $("#text");
-  const fileInput = $("#fileInput");
-  const filenameEl = $("#filename");
+  <script>
+    const editor = document.getElementById("editor");
+    const fileInput = document.getElementById("fileInput");
+    const filenameInput = document.getElementById("filename");
 
-  const setStatus = (msg) => { statusEl.textContent = msg; };
-  const defaultName = () => filenameEl.value.trim() || "arquivo.txt";
+    // Abrir arquivo
+    fileInput.addEventListener("change", async () => {
+      const file = fileInput.files[0];
+      if (file && file.type === "text/plain") {
+        const text = await file.text();
+        editor.value = text;
+        filenameInput.value = file.name;
+      }
+    });
 
-  // Persistência local (localStorage)
-  const STORAGE_KEY = "retro-txt-editor";
-  const saveLocal = () => {
-    const payload = {
-      filename: defaultName(),
-      content: textEl.value,
-      ts: Date.now()
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    setStatus("Salvo localmente");
-  };
-  const loadLocal = () => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const data = JSON.parse(raw);
-      filenameEl.value = data.filename || "arquivo.txt";
-      textEl.value = data.content || "";
-      setStatus("Carregado do armazenamento local");
-    } catch {
-      // ignora erro
+    // Salvar localmente
+    function saveLocal() {
+      const data = {
+        filename: filenameInput.value || "arquivo.txt",
+        content: editor.value
+      };
+      localStorage.setItem("retro-editor", JSON.stringify(data));
+      alert("Salvo localmente!");
     }
-  };
 
-  // Novo arquivo
-  $("#newBtn").addEventListener("click", () => {
-    textEl.value = "";
-    filenameEl.value = "novo-arquivo.txt";
-    setStatus("Novo arquivo");
-  });
-
-  // Abrir via input
-  $("#openBtn").addEventListener("click", () => fileInput.click());
-  fileInput.addEventListener("change", async () => {
-    const file = fileInput.files?.[0];
-    if (!file) return;
-    if (file.type && file.type !== "text/plain") {
-      setStatus("Formato não suportado (use .txt)");
-      return;
+    // Baixar como .txt
+    function downloadFile() {
+      const blob = new Blob([editor.value], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filenameInput.value || "arquivo.txt";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
-    const text = await file.text();
-    textEl.value = text;
-    filenameEl.value = file.name || "arquivo.txt";
-    setStatus(`Aberto: ${file.name || "arquivo.txt"}`);
-  });
 
-  // Arrastar e soltar
-  const dropZone = $("#dropZone");
-  ["dragenter","dragover"].forEach(evt =>
-    dropZone.addEventListener(evt, (e) => {
-      e.preventDefault(); e.stopPropagation();
-      dropZone.classList.add("active");
-      setStatus("Solte para abrir");
-    })
-  );
-  ["dragleave","drop"].forEach(evt =>
-    dropZone.addEventListener(evt, (e) => {
-      e.preventDefault(); e.stopPropagation();
-      dropZone.classList.remove("active");
-    })
-  );
-  dropZone.addEventListener("drop", async (e) => {
-    const file = e.dataTransfer.files?.[0];
-    if (!file) return;
-    if (file.type && file.type !== "text/plain") {
-      setStatus("Formato não suportado (use .txt)");
-      return;
-    }
-    const text = await file.text();
-    textEl.value = text;
-    filenameEl.value = file.name || "arquivo.txt";
-    setStatus(`Aberto: ${file.name || "arquivo.txt"}`);
-  });
-
-  // Salvar no armazenamento local (não baixa arquivo)
-  $("#saveBtn").addEventListener("click", saveLocal);
-
-  // Baixar como .txt (download)
-  $("#downloadBtn").addEventListener("click", () => {
-    const blob = new Blob([textEl.value], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = defaultName();
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-    setStatus(`Baixado: ${defaultName()}`);
-  });
-
-  // Auto-save leve
-  let debounce;
-  textEl.addEventListener("input", () => {
-    setStatus("Editando...");
-    clearTimeout(debounce);
-    debounce = setTimeout(saveLocal, 600);
-  });
-
-  // Carregamento inicial
-  window.addEventListener("DOMContentLoaded", loadLocal);
-</script>
+    // Carregar do localStorage
+    window.addEventListener("DOMContentLoaded", () => {
+      const saved = localStorage.getItem("retro-editor");
+      if (saved) {
+        const data = JSON.parse(saved);
+        editor.value = data.content || "";
+        filenameInput.value = data.filename || "arquivo.txt";
+      }
+    });
+  </script>
 </body>
 </html>
