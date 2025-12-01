@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Code Editor - Dark Theme</title>
-<!-- Import Map para carregar a biblioteca Gemini direto do navegador -->
+<!-- Import Map para carregar a biblioteca Gemini -->
 <script type="importmap">
 {
   "imports": {
@@ -14,7 +14,7 @@
   }
 }
 </script>
-<!-- Fonte JetBrains Mono para ficar igual ao print -->
+<!-- Fonte JetBrains Mono -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -23,8 +23,8 @@
   :root {
     /* Paleta Dracula Oficial */
     --bg-app: #eef1f5;
-    --window-bg: #282a36;     /* Background Principal */
-    --fg-primary: #f8f8f2;    /* Texto */
+    --window-bg: #282a36;     
+    --fg-primary: #f8f8f2;    
     
     /* Cores de Sintaxe e UI */
     --accent-pink: #ff79c6;
@@ -47,7 +47,6 @@
     height: 100%;
     margin: 0;
     font-family: 'JetBrains Mono', monospace;
-    /* Fundo externo neutro/suave para destacar o editor escuro */
     background: radial-gradient(circle at center, #d0d6e2 0%, #bdc3c7 100%);
     color: var(--fg-primary);
     overflow: hidden;
@@ -65,7 +64,7 @@
     align-items: center;
   }
 
-  /* Janela do Editor (O bloco escuro) */
+  /* Janela do Editor */
   .window {
     background: var(--window-bg);
     border-radius: 12px;
@@ -78,10 +77,9 @@
     height: 85vh;
     position: relative;
     overflow: hidden;
-    transition: transform 0.2s ease;
   }
 
-  /* Barra de Título / Controles */
+  /* Barra de Título */
   .titlebar {
     padding: 16px 20px;
     display: flex;
@@ -91,15 +89,11 @@
     user-select: none;
   }
 
-  /* Bolinhas Mac */
   .window-controls {
     display: flex;
     gap: 8px;
   }
-  .dot {
-    width: 12px; height: 12px;
-    border-radius: 50%;
-  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
   .dot.red { background: #ff5f56; }
   .dot.yellow { background: #ffbd2e; }
   .dot.green { background: #27c93f; }
@@ -133,10 +127,8 @@
 
   .btn:active {
     transform: scale(0.96);
-    background: rgba(255, 255, 255, 0.02);
   }
   
-  /* Botão Salvar (Rosa Dracula) */
   .btn-primary {
     background: var(--accent-pink);
     color: #282a36;
@@ -146,11 +138,7 @@
     color: #282a36;
     box-shadow: 0 0 15px rgba(255, 121, 198, 0.4);
   }
-  .btn-primary:active {
-    transform: scale(0.96);
-  }
 
-  /* Botão AI (Gradiente Dracula) */
   .btn-ai {
     background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
     color: #282a36;
@@ -159,9 +147,6 @@
   .btn-ai:hover {
     filter: brightness(1.1);
     box-shadow: 0 0 15px rgba(139, 233, 253, 0.4);
-  }
-  .btn-ai:active {
-    transform: scale(0.96);
   }
 
   /* Input Nome do Arquivo */
@@ -182,7 +167,17 @@
     border-color: var(--comment);
     background: rgba(0,0,0,0.4);
   }
-  .file-input { display: none; }
+  /* Importante: visibility hidden mas presente no DOM */
+  .file-input { 
+    position: absolute;
+    width: 1px; 
+    height: 1px; 
+    padding: 0; 
+    margin: -1px; 
+    overflow: hidden; 
+    clip: rect(0,0,0,0); 
+    border: 0; 
+  }
 
   /* Área de Texto Principal */
   .editor-container {
@@ -190,10 +185,9 @@
     position: relative;
     padding: 0;
     display: flex;
-    overflow: hidden; /* Importante para o scroll funcionar corretamente */
+    overflow: hidden; 
   }
   
-  /* Números de linha */
   .line-numbers {
     padding: 20px 10px 20px 20px;
     text-align: right;
@@ -221,17 +215,17 @@
     outline: none;
     font-family: 'JetBrains Mono', monospace;
     white-space: pre;
-    overflow-y: auto; /* Scroll apenas aqui */
+    overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: var(--selection) transparent;
   }
 
-  /* Rodapé Minimalista */
+  /* Statusbar */
   .statusbar {
     padding: 8px 20px;
     font-size: 12px;
     color: var(--comment);
-    background: #21222c; /* Levemente mais escuro */
+    background: #21222c;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -323,7 +317,6 @@
     background: rgba(139, 233, 253, 0.1);
   }
 
-  /* Responsivo */
   @media (max-width: 600px) {
     .wrap { padding: 0; max-width: 100%; }
     .window { height: 100vh; border-radius: 0; }
@@ -347,9 +340,9 @@
       
       <div class="toolbar">
         <input type="file" id="fileInput" class="file-input">
-        <button class="btn" id="btnOpen">Abrir</button>
-        <button class="btn btn-primary" id="btnSave">Salvar</button>
-        <button class="btn btn-ai" id="btnAi">AI ✨</button>
+        <button class="btn" id="btnOpen" onclick="handleOpenClick()">Abrir</button>
+        <button class="btn btn-primary" id="btnSave" onclick="handleSaveClick()">Salvar</button>
+        <button class="btn btn-ai" id="btnAi" onclick="handleAiClick()">AI ✨</button>
       </div>
     </div>
 
@@ -381,15 +374,15 @@
   <div class="modal">
     <div style="display:flex; justify-content:space-between; align-items:center;">
       <h2><span>✨</span> AI Assistant</h2>
-      <button id="closeAi" style="background:none; border:none; color:var(--comment); cursor:pointer; font-size:24px;">&times;</button>
+      <button onclick="document.getElementById('aiModal').classList.remove('open')" style="background:none; border:none; color:var(--comment); cursor:pointer; font-size:24px;">&times;</button>
     </div>
-    <p style="color: var(--comment); font-size: 14px; margin-bottom: 20px;">Use a inteligência do Google Gemini 2.5 para melhorar seu código.</p>
+    <p style="color: var(--comment); font-size: 14px; margin-bottom: 20px;">Use o Gemini 2.5 para melhorar seu código.</p>
     
     <div class="modal-grid">
-      <button class="modal-btn" onclick="runAi('fix')">Corrigir Bugs</button>
-      <button class="modal-btn" onclick="runAi('refactor')">Refatorar</button>
-      <button class="modal-btn" onclick="runAi('explain')">Explicar</button>
-      <button class="modal-btn" onclick="runAi('convert')">Para Python</button>
+      <button class="modal-btn" onclick="executeAiAction('fix')">Corrigir Bugs</button>
+      <button class="modal-btn" onclick="executeAiAction('refactor')">Refatorar</button>
+      <button class="modal-btn" onclick="executeAiAction('explain')">Explicar</button>
+      <button class="modal-btn" onclick="executeAiAction('convert')">Para Python</button>
     </div>
     
     <div id="loading" style="display:none; margin-top:20px; text-align:center; color:var(--accent-cyan); font-size:13px;">
@@ -398,22 +391,9 @@
   </div>
 </div>
 
-<script type="module">
-  import { GoogleGenAI } from "@google/genai";
-
-  // --- CONFIGURAÇÃO DA CHAVE ---
-  // Se quiser deixar fixa para testes, coloque abaixo.
-  const API_KEY_HARDCODED = ""; 
-
-  const getApiKey = () => {
-    if (API_KEY_HARDCODED) return API_KEY_HARDCODED;
-    return localStorage.getItem("GEMINI_API_KEY") || "";
-  };
-
-  const API_KEY = getApiKey();
-  const ai = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
-
-  // --- Elementos ---
+<!-- Script Principal (Funcionalidades Básicas) -->
+<script>
+  // Elementos Globais
   const $ = (id) => document.getElementById(id);
   const editor = $("editor");
   const lineNumbers = $("lineNumbers");
@@ -421,20 +401,21 @@
   const statusMsg = $("statusMsg");
   const statusDot = $("statusDot");
   const charCount = $("charCount");
+  const fileInput = $("fileInput");
 
-  // --- Lógica do Editor ---
-  const updateLines = () => {
+  // Funções Auxiliares de UI
+  function updateLines() {
     const lines = editor.value.split('\n').length;
     lineNumbers.innerHTML = Array(lines).fill(0).map((_, i) => i + 1).join('<br>');
-  };
+  }
 
-  const updateStatus = (msg, type = 'normal') => {
+  function updateStatus(msg, type = 'normal') {
     statusMsg.textContent = msg;
     statusDot.className = 'dot-status ' + (type === 'busy' ? 'busy' : 'active');
     statusMsg.style.color = type === 'busy' ? 'var(--accent-orange)' : 'var(--accent-green)';
-  };
+  }
 
-  // Sincronia de Scroll e Linhas
+  // Eventos de Digitação e Scroll
   editor.addEventListener('input', () => {
     updateLines();
     charCount.textContent = editor.value.length + " chars";
@@ -445,31 +426,27 @@
     lineNumbers.scrollTop = editor.scrollTop;
   });
 
-  // --- Botões ---
+  // --- LÓGICA DE ABRIR E SALVAR (Global para funcionar sem falhas) ---
 
-  // 1. Abrir Arquivo
-  $("btnOpen").addEventListener('click', () => {
-    // Reseta o value para garantir que o evento 'change' dispare mesmo se escolher o mesmo arquivo
-    $("fileInput").value = ''; 
-    $("fileInput").click();
-  });
-  
-  $("fileInput").addEventListener('change', async (e) => {
+  window.handleOpenClick = function() {
+    fileInput.value = ''; // Reset para permitir reabrir o mesmo arquivo
+    fileInput.click();
+  };
+
+  fileInput.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if(!file) return;
-    
     try {
       editor.value = await file.text();
       fileName.value = file.name;
       updateLines();
       updateStatus("Arquivo carregado");
     } catch(err) {
-      alert("Erro ao ler arquivo: " + err);
+      alert("Erro ao abrir: " + err);
     }
   });
 
-  // 2. Salvar Arquivo (CORRIGIDO)
-  $("btnSave").addEventListener('click', () => {
+  window.handleSaveClick = function() {
     try {
       const content = editor.value;
       const name = fileName.value.trim() || "untitled.txt";
@@ -481,26 +458,25 @@
       a.href = url;
       a.download = name;
       
-      // Essencial para Firefox e compatibilidade geral
+      // Anexa ao body para compatibilidade (Firefox requer isso)
       document.body.appendChild(a);
       a.click();
       
       // Limpeza
       document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 100);
+      setTimeout(() => URL.revokeObjectURL(url), 200);
       
       updateStatus("Salvo com sucesso!");
     } catch (e) {
+      console.error(e);
       alert("Erro ao salvar: " + e.message);
     }
-  });
+  };
 
-  // --- Drag & Drop ---
+  // Drag & Drop
   const dropZone = $("dropZone");
   window.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('active'); });
-  window.addEventListener('dragleave', (e) => { 
-    if(e.target === dropZone) dropZone.classList.remove('active'); 
-  });
+  window.addEventListener('dragleave', (e) => { if(e.target === dropZone) dropZone.classList.remove('active'); });
   window.addEventListener('drop', async (e) => {
     e.preventDefault();
     dropZone.classList.remove('active');
@@ -513,38 +489,66 @@
     }
   });
 
-  // --- Lógica da IA ---
-  const aiModal = $("aiModal");
-  const loading = $("loading");
+  // Inicialização Visual
+  updateLines();
+</script>
 
-  $("btnAi").addEventListener('click', () => {
-    if(!API_KEY) {
-      const key = prompt("Para usar a IA, insira sua chave da API Google Gemini:");
-      if(key) {
-        localStorage.setItem("GEMINI_API_KEY", key);
-        alert("Chave salva! Recarregue a página para aplicar.");
-        location.reload();
+<!-- Script do Módulo IA (Carregado Separadamente) -->
+<script type="module">
+  import { GoogleGenAI } from "@google/genai";
+
+  // Gerenciamento de Chave API
+  const getApiKey = () => {
+    return localStorage.getItem("GEMINI_API_KEY") || "";
+  };
+
+  let ai = null;
+  const apiKey = getApiKey();
+  if (apiKey) {
+    try {
+      ai = new GoogleGenAI({ apiKey: apiKey });
+    } catch (e) {
+      console.error("Erro ao inicializar IA", e);
+    }
+  }
+
+  // Funções Globais para UI acessar o Módulo
+  window.handleAiClick = () => {
+    const key = getApiKey();
+    if(!key) {
+      const input = prompt("Para usar a IA, insira sua chave da API Google Gemini:");
+      if(input) {
+        localStorage.setItem("GEMINI_API_KEY", input);
+        // Tenta reconectar sem recarregar a página se possível
+        try {
+          ai = new GoogleGenAI({ apiKey: input });
+          alert("Chave salva! IA ativada.");
+          document.getElementById('aiModal').classList.add('open');
+        } catch(e) {
+          alert("Erro na chave. Recarregue a página.");
+          location.reload();
+        }
       }
       return;
     }
-    aiModal.classList.add('open');
-  });
+    document.getElementById('aiModal').classList.add('open');
+  };
 
-  $("closeAi").addEventListener('click', () => aiModal.classList.remove('open'));
-
-  // Função Global para ser chamada pelos botões do modal
-  window.runAi = async (action) => {
+  window.executeAiAction = async (action) => {
+    const editor = document.getElementById("editor");
     if(!editor.value.trim()) return alert("O editor está vazio!");
+    if(!ai) return alert("IA não inicializada. Verifique sua chave API.");
     
+    const loading = document.getElementById("loading");
     loading.style.display = 'block';
     updateStatus("IA Processando...", "busy");
     
-    let promptText = "";
     const code = editor.value;
+    let promptText = "";
 
     switch(action) {
-      case 'fix': promptText = "Fix bugs, typos and improve syntax in the following code/text. Output ONLY the fixed code/text:\n\n" + code; break;
-      case 'refactor': promptText = "Refactor this code to be cleaner and more efficient. Output ONLY the code:\n\n" + code; break;
+      case 'fix': promptText = "Fix bugs and improve this code/text. Output ONLY the result:\n\n" + code; break;
+      case 'refactor': promptText = "Refactor this code to be cleaner. Output ONLY the code:\n\n" + code; break;
       case 'explain': promptText = "Explain briefly what this code/text does in Portuguese:\n\n" + code; break;
       case 'convert': promptText = "Convert this code to Python. Output ONLY the Python code:\n\n" + code; break;
     }
@@ -558,10 +562,9 @@
       const result = response.text;
       
       if(action === 'explain') {
-        // Se for explicação, comenta no topo
-        editor.value = "/* 🤖 EXPLICAÇÃO DA IA:\n" + result.replace(/\*\//g, "* /") + "\n*/\n\n" + code;
+        editor.value = "/* 🤖 EXPLICAÇÃO:\n" + result.replace(/\*\//g, "* /") + "\n*/\n\n" + code;
       } else {
-        // Limpa blocos de markdown ``` se a IA retornar
+        // Limpeza básica de blocos markdown
         let cleanText = result;
         if (cleanText.startsWith('```')) {
           cleanText = cleanText.replace(/^```\w*\n?/, '').replace(/\n?```$/, '');
@@ -570,7 +573,7 @@
       }
       
       updateLines();
-      aiModal.classList.remove('open');
+      document.getElementById('aiModal').classList.remove('open');
       updateStatus("Concluído pela IA");
     } catch(err) {
       alert("Erro na IA: " + err.message);
@@ -579,9 +582,6 @@
       loading.style.display = 'none';
     }
   };
-
-  // Inicialização
-  updateLines();
 </script>
 </body>
 </html>
