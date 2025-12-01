@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CodeWord 98</title>
+    <title>Slide Presenter AI</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -12,25 +12,18 @@
         theme: {
           extend: {
             colors: {
-              cw: {
-                bg: 'var(--cw-bg)',
-                panel: 'var(--cw-panel)',
-                paper: 'var(--cw-paper)',
-                pink: 'var(--cw-pink)',
-                cyan: 'var(--cw-cyan)',
-                green: 'var(--cw-green)',
-                yellow: 'var(--cw-yellow)',
-                orange: 'var(--cw-orange)',
-                purple: 'var(--cw-purple)',
-                text: 'var(--cw-text)',
-                comment: 'var(--cw-comment)',
-                selection: 'var(--cw-selection)',
+              gray: {
+                850: '#1f2937',
+                900: '#111827',
+                950: '#0B0F19',
+              },
+              brand: {
+                blue: '#3b82f6',
+                accent: '#f59e0b'
               }
             },
             fontFamily: {
-              mono: ['"Fira Code"', 'monospace'],
               sans: ['"Inter"', 'sans-serif'],
-              serif: ['"Merriweather"', 'serif'],
             }
           }
         }
@@ -38,105 +31,43 @@
     </script>
     
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600&family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Styles -->
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     <style>
-      :root {
-        /* Modern (Dracula) Theme - Default */
-        --cw-bg: #1e1e2e;
-        --cw-panel: #282a36;
-        --cw-paper: #252538;
-        --cw-pink: #ff79c6;
-        --cw-cyan: #8be9fd;
-        --cw-green: #50fa7b;
-        --cw-yellow: #f1fa8c;
-        --cw-orange: #ffb86c;
-        --cw-purple: #bd93f9;
-        --cw-text: #f8f8f2;
-        --cw-comment: #6272a4;
-        --cw-selection: #44475a;
-      }
-
-      /* Classic Blue Theme (Retro) */
-      [data-theme="classic"] {
-        --cw-bg: #000080;          /* Classic Navy Background */
-        --cw-panel: #c0c0c0;       /* Windows 98 Gray */
-        --cw-paper: #ffffff;       /* White Paper */
-        --cw-pink: #000080;        /* Accent color maps to Navy */
-        --cw-cyan: #008080;        /* Teal */
-        --cw-green: #008000;       /* Green */
-        --cw-yellow: #808000;      /* Olive */
-        --cw-orange: #800000;      /* Maroon */
-        --cw-purple: #800080;      /* Purple */
-        --cw-text: #000000;        /* Black Text */
-        --cw-comment: #808080;     /* Dark Gray */
-        --cw-selection: #000080;   /* Selection Blue */
-      }
-      
-      /* Theme overrides for Classic Mode specifically */
-      [data-theme="classic"] .text-cw-bg { color: white !important; } /* Invert icons on title bar */
-      [data-theme="classic"] .bg-cw-selection { background-color: #000080 !important; color: white !important; }
-      [data-theme="classic"] ::selection { background: #000080; color: white; }
-
-      body { margin: 0; overflow: hidden; background-color: var(--cw-bg); transition: background-color 0.3s; }
+      body { margin: 0; overflow: hidden; background-color: #0B0F19; color: #e5e7eb; font-family: 'Inter', sans-serif; }
       
       /* Scrollbar */
-      ::-webkit-scrollbar { width: 16px; height: 16px; }
-      ::-webkit-scrollbar-track { background: var(--cw-panel); }
-      ::-webkit-scrollbar-thumb { 
-        background: var(--cw-panel); 
-        border-top: 2px solid #fff; 
-        border-left: 2px solid #fff; 
-        border-right: 2px solid #000; 
-        border-bottom: 2px solid #000; 
+      ::-webkit-scrollbar { width: 8px; height: 8px; }
+      ::-webkit-scrollbar-track { background: #111827; }
+      ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+      
+      .slide-preview {
+        aspect-ratio: 16/9;
+        overflow: hidden;
       }
-      ::-webkit-scrollbar-thumb:active { 
-        border-top: 2px solid #000; 
-        border-left: 2px solid #000; 
-        border-right: 2px solid #fff; 
-        border-bottom: 2px solid #fff; 
-      }
-      
-      [contenteditable]:empty:before { content: attr(placeholder); color: var(--cw-comment); font-style: italic; }
-      ::selection { background: var(--cw-selection); color: #fff; }
-      
-      /* Error overlay */
-      #error-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1e1e2e; color: #ff79c6; z-index: 9999; padding: 2rem; font-family: monospace; overflow: auto; }
-      
-      /* Utility to hide scrollbar but keep functionality */
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 
-    <!-- SETUP PROCESS ENV & ERROR HANDLING -->
+    <!-- SETUP PROCESS ENV -->
     <script>
-      // 1. Shim process.env for the API Key
       window.process = {
         env: {
           // TODO: Replace with your actual API Key for AI features
           API_KEY: 'YOUR_API_KEY_HERE' 
         }
       };
-
-      // 2. Global Error Handler
-      window.onerror = function(message, source, lineno, colno, error) {
-        const overlay = document.getElementById('error-overlay');
-        if (overlay) {
-          overlay.style.display = 'block';
-          overlay.innerHTML += `<h3 style="color:red">Error Detected:</h3><p>${message}</p><p>Line: ${lineno}</p>`;
-          console.error("Global Error:", message, error);
-        }
-      };
     </script>
 
-    <!-- Import Map: Cleaned up to avoid conflicts -->
+    <!-- Import Map -->
     <script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@18.2.0",
-    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-    "lucide-react": "https://esm.sh/lucide-react@0.378.0",
+    "react": "https://esm.sh/react@18.2.0?dev",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?dev",
+    "lucide-react": "https://esm.sh/lucide-react@0.378.0?dev",
     "@google/genai": "https://esm.sh/@google/genai@0.1.1",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "react/": "https://aistudiocdn.com/react@^19.2.0/"
@@ -148,518 +79,440 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   </head>
   <body>
-    <!-- Root Element -->
-    <div id="root" class="h-full w-full flex items-center justify-center text-cw-comment bg-gray-900">
-      <div class="animate-pulse text-white font-mono">Loading CodeWord 98...</div>
-    </div>
+    <div id="root" class="h-screen w-screen flex flex-col"></div>
 
-    <!-- Error Overlay -->
-    <div id="error-overlay"></div>
-
-    <!-- MAIN APP SCRIPT -->
     <script type="text/babel" data-type="module">
       import React, { useState, useEffect, useRef } from 'react';
       import { createRoot } from 'react-dom/client';
       import { 
-        Minus, Square, X, FileText, Settings, CircleHelp, 
-        Type, Save, Printer, Bold, Italic, Underline, AlignLeft, 
-        AlignCenter, AlignRight, List, ListOrdered, Undo, Redo, 
-        Sparkles, ChevronDown, Palette, Highlighter, Check, ChevronRight
+        Presentation, FileText, Upload, MonitorPlay, 
+        ChevronLeft, ChevronRight, Sparkles, X, Menu,
+        Layout, Play
       } from 'lucide-react';
       import { GoogleGenAI } from "@google/genai";
 
       // --- CONSTANTS ---
-      const INITIAL_CONTENT = `
-        <h1 style="font-size: 2em; font-weight: bold; margin-bottom: 0.5em; color: var(--cw-purple);">Welcome to CodeWord 98</h1>
-        <p>This is a <b>retro-styled</b> word processor inspired by the aesthetics of modern code editors.</p>
-        <p>Type anywhere to start editing. Use the toolbar above to format your text.</p>
-        <p><br></p>
-        <p><i style="color: var(--cw-yellow);">Features include:</i></p>
-        <ul style="list-style-type: disc; margin-left: 20px;">
-          <li>Rich text editing</li>
-          <li><b>AI Assistance</b> powered by Gemini</li>
-          <li>Classic Blue & Modern Themes</li>
-        </ul>
-      `;
-
-      const AiMode = {
-        FixGrammar: 'FIX_GRAMMAR',
-        Summarize: 'SUMMARIZE',
-        Expand: 'EXPAND',
-        ToneProfessional: 'TONE_PROFESSIONAL'
-      };
+      const INITIAL_DECK = `Welcome to Slide Presenter AI
+This is the title slide.
+Use the arrow keys to navigate.
+---
+Features
+1. Dual Screen Support
+2. Text-based Editing
+3. AI Deck Generation
+4. Real-time Preview
+---
+How to Use
+- Click "Open TXT" to load your script.
+- Separate slides with "---".
+- Click "Start Presentation" to open the viewer window.
+- Move this window to your laptop screen, and the viewer to the projector.
+---
+AI Generation
+Click the "AI Generate" button to create a slide deck about any topic instantly.
+`;
 
       // --- AI SERVICE ---
-      let genAIInstance = null;
-      const getGenAI = () => {
-        if (!genAIInstance) {
-          const apiKey = window.process?.env?.API_KEY;
-          if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
-            console.warn("API Key is missing or default. AI features will not work.");
-            // We return null but allow app to continue
-            return null;
-          }
-          genAIInstance = new GoogleGenAI({ apiKey });
+      const generateSlideDeck = async (topic) => {
+        const apiKey = window.process?.env?.API_KEY;
+        if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
+          alert("API Key is missing. Please edit index.html to add your Google Gemini API Key.");
+          return null;
         }
-        return genAIInstance;
-      };
 
-      const generateAiContent = async (text, mode) => {
-        const ai = getGenAI();
-        if (!ai) return "Error: API Key missing. Edit index.html to add your key.";
-
+        const ai = new GoogleGenAI({ apiKey });
         const modelId = 'gemini-2.5-flash';
-        let prompt = "";
         
-        switch (mode) {
-          case AiMode.FixGrammar:
-            prompt = `Correct the grammar and spelling. Return only the corrected text:\n\n${text}`;
-            break;
-          case AiMode.Summarize:
-            prompt = `Summarize this in one paragraph:\n\n${text}`;
-            break;
-          case AiMode.Expand:
-            prompt = `Expand this text with more detail:\n\n${text}`;
-            break;
-          case AiMode.ToneProfessional:
-            prompt = `Rewrite to sound professional:\n\n${text}`;
-            break;
-          default:
-            prompt = text;
-        }
+        const prompt = `Create a presentation slide deck about: "${topic}".
+        Format the output specifically for a slide parser:
+        - Separate each slide with "---" on a new line.
+        - The first line of each slide is the Title (Header).
+        - The rest is the content.
+        - Use simple plain text or simple HTML tags (<br>, <ul>, <li>, <b>) for formatting.
+        - Create at least 5 slides.
+        - Do not include markdown code blocks (like \`\`\`). Just raw text.`;
 
         try {
           const response = await ai.models.generateContent({
             model: modelId,
             contents: prompt,
           });
-          return response.text || "No response.";
+          return response.text;
         } catch (error) {
           console.error("AI Error:", error);
-          return "Error generating content. Check console.";
+          alert("Failed to generate deck. See console.");
+          return null;
         }
       };
 
-      // --- SHARED COMPONENTS ---
-      const WinButton = ({ children, onClick, className = "", red = false }) => (
-        <button 
-          onClick={onClick}
-          className={`
-            flex items-center justify-center w-5 h-5 
-            border-t border-l border-b-black border-r-black 
-            active:border-t-black active:border-l-black active:border-b-cw-comment active:border-r-cw-comment
-            active:bg-cw-selection
-            ${red ? 'bg-cw-pink text-cw-bg' : 'bg-cw-panel border-cw-comment text-cw-comment'}
-            ${className}
-          `}
-        >
-          {children}
-        </button>
-      );
+      // --- HELPER FUNCTIONS ---
+      const parseSlides = (text) => {
+        if (!text) return [];
+        return text.split('---').map(s => {
+          const clean = s.trim();
+          const lines = clean.split('\n');
+          const title = lines[0] ? lines[0].trim() : '(No Title)';
+          const body = lines.slice(1).join('\n').trim();
+          return { title, body, fullText: clean };
+        }).filter(s => s.fullText.length > 0);
+      };
 
-      const ToolBtn = ({ icon: Icon, onClick, active = false, label }) => (
-        <button
-          onClick={onClick}
-          title={label}
-          className={`
-            flex items-center justify-center p-1 min-w-[28px] h-[26px] mx-[1px]
-            border-t border-l border-b-black border-r-black
-            ${active 
-              ? 'bg-cw-selection border-t-black border-l-black border-b-cw-comment border-r-cw-comment text-cw-pink' 
-              : 'bg-cw-panel border-cw-comment hover:bg-cw-selection/50 text-cw-text active:border-t-black active:border-l-black active:border-b-cw-comment active:border-r-cw-comment'
-            }
-          `}
-        >
-          <Icon size={14} />
-        </button>
-      );
+      const escapeHTML = (str) => {
+        return str
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;')
+          .replace(/\n/g, '<br>');
+      };
 
-      const Divider = () => (
-        <div className="w-[2px] h-[20px] bg-cw-comment/20 mx-1 border-l border-cw-selection/30 border-r border-black/30" />
-      );
+      // --- POPUP HTML TEMPLATE ---
+      const POPUP_HTML_TEMPLATE = `
+        <html>
+          <head>
+            <title>Presentation Viewer</title>
+            <style>
+              body {
+                background-color: #000;
+                color: #fff;
+                font-family: 'Segoe UI', sans-serif;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+                padding: 40px;
+                box-sizing: border-box;
+                text-align: center;
+              }
+              #slide-container {
+                max-width: 90%;
+              }
+              h1 { font-size: 4vw; margin-bottom: 2vh; color: #fbbf24; text-transform: uppercase; letter-spacing: 2px; }
+              p, div { font-size: 2.5vw; line-height: 1.5; color: #e5e7eb; }
+              ul { text-align: left; display: inline-block; font-size: 2vw; }
+              li { margin-bottom: 1vh; }
+            </style>
+          </head>
+          <body>
+            <div id="slide-container">
+              <h1 id="title">Waiting for slides...</h1>
+              <div id="content"></div>
+            </div>
+            <script>
+              window.addEventListener('message', (event) => {
+                if (event.data) {
+                  const { title, body } = event.data;
+                  document.getElementById('title').innerHTML = title || '';
+                  
+                  // Simple formatter for body
+                  let formattedBody = body || '';
+                  // If body doesn't look like HTML, treat newlines as <br>
+                  if (!formattedBody.includes('<')) {
+                     formattedBody = formattedBody.replace(/\\n/g, '<br>');
+                  }
+                  
+                  document.getElementById('content').innerHTML = formattedBody;
+                }
+              });
 
-      // --- MENU BAR COMPONENT ---
-      const MenuBar = ({ onMenuAction }) => {
-        const [activeMenu, setActiveMenu] = useState(null);
-        
-        const menus = {
-          File: [
-            { label: 'New', action: 'file-new', shortcut: 'Ctrl+N' },
-            { label: 'Open...', action: 'file-open', shortcut: 'Ctrl+O' },
-            { label: 'Save As...', action: 'file-save', shortcut: 'Ctrl+S' },
-            { type: 'separator' },
-            { label: 'Exit', action: 'file-exit' }
-          ],
-          Edit: [
-            { label: 'Undo', action: 'undo', shortcut: 'Ctrl+Z' },
-            { label: 'Redo', action: 'redo', shortcut: 'Ctrl+Y' },
-            { type: 'separator' },
-            { label: 'Select All', action: 'select-all', shortcut: 'Ctrl+A' }
-          ],
-          View: [
-             { label: 'Toggle Word Wrap', action: 'toggle-wrap' },
-             { label: 'Toggle Theme', action: 'toggle-theme' }
-          ],
-          Help: [
-            { label: 'About CodeWord', action: 'help-about' }
-          ]
-        };
+              // Forward key events to opener
+              document.addEventListener('keydown', (e) => {
+                if(window.opener) {
+                  window.opener.postMessage({ type: 'KEYDOWN', key: e.key }, '*');
+                }
+              });
+            </script>
+          </body>
+        </html>
+      `;
 
-        const handleMenuClick = (menuName) => {
-          setActiveMenu(activeMenu === menuName ? null : menuName);
-        };
+      // --- COMPONENTS ---
 
-        const handleItemClick = (action) => {
-          onMenuAction(action);
-          setActiveMenu(null);
-        };
+      const App = () => {
+        const [rawText, setRawText] = useState(INITIAL_DECK);
+        const [slides, setSlides] = useState(parseSlides(INITIAL_DECK));
+        const [currentIndex, setCurrentIndex] = useState(0);
+        const [popupWindow, setPopupWindow] = useState(null);
+        const [isAiLoading, setIsAiLoading] = useState(false);
+        const [showAiModal, setShowAiModal] = useState(false);
+        const fileInputRef = useRef(null);
 
+        // Sync parsing when raw text changes
         useEffect(() => {
-          const closeMenu = (e) => {
-            if (!e.target.closest('.menu-container')) {
-              setActiveMenu(null);
+          setSlides(parseSlides(rawText));
+        }, [rawText]);
+
+        // Sync with Popup when index or slides change
+        useEffect(() => {
+          if (popupWindow && !popupWindow.closed) {
+            const current = slides[currentIndex];
+            if (current) {
+              popupWindow.postMessage({ 
+                title: current.title, 
+                body: current.body 
+              }, '*');
+            }
+          }
+        }, [currentIndex, slides, popupWindow]);
+
+        // Listen for keys from Popup
+        useEffect(() => {
+          const handleMessage = (event) => {
+            if (event.data?.type === 'KEYDOWN') {
+              handleNavigation(event.data.key);
             }
           };
-          document.addEventListener('click', closeMenu);
-          return () => document.removeEventListener('click', closeMenu);
-        }, []);
+          window.addEventListener('message', handleMessage);
+          return () => window.removeEventListener('message', handleMessage);
+        }, [slides, currentIndex]); // Dependencies important for handleNavigation closure
 
-        return (
-          <div className="flex px-1 py-1 space-x-1 text-sm text-cw-text border-b border-cw-comment select-none relative z-50 menu-container">
-            {Object.keys(menus).map(menu => (
-              <div key={menu} className="relative">
-                <span 
-                  onClick={() => handleMenuClick(menu)}
-                  className={`px-2 py-0.5 cursor-pointer first-letter:underline hover:bg-cw-selection hover:text-white ${activeMenu === menu ? 'bg-cw-selection text-white' : ''}`}
-                >
-                  {menu}
-                </span>
-                
-                {activeMenu === menu && (
-                  <div className="absolute top-full left-0 min-w-[150px] bg-cw-panel border-2 border-t-cw-comment border-l-cw-comment border-b-black border-r-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] z-50 py-1">
-                    {menus[menu].map((item, idx) => {
-                      if (item.type === 'separator') {
-                        return <div key={idx} className="h-[1px] bg-cw-comment my-1 mx-1" />;
-                      }
-                      return (
-                        <div 
-                          key={idx}
-                          onClick={() => handleItemClick(item.action)}
-                          className="px-4 py-1 hover:bg-cw-selection hover:text-white flex justify-between gap-4 cursor-pointer"
-                        >
-                          <span>{item.label}</span>
-                          {item.shortcut && <span className="opacity-50 text-xs mt-0.5">{item.shortcut}</span>}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        );
-      };
-
-      // --- TOOLBAR COMPONENT ---
-      const Toolbar = ({ onFormat, onAiAction, isAiLoading }) => {
-        const [showAiMenu, setShowAiMenu] = useState(false);
-
-        return (
-          <div className="flex items-center px-1 py-1 border-b border-cw-comment bg-cw-panel select-none relative z-20">
-            <div className="w-1 h-5 border-l border-cw-comment border-r border-black mr-2"></div>
-
-            <div className="flex items-center space-x-0 overflow-x-auto no-scrollbar">
-              <ToolBtn icon={Undo} onClick={() => onFormat('undo')} label="Undo" />
-              <ToolBtn icon={Redo} onClick={() => onFormat('redo')} label="Redo" />
-              <Divider />
-              <ToolBtn icon={Bold} onClick={() => onFormat('bold')} label="Bold" />
-              <ToolBtn icon={Italic} onClick={() => onFormat('italic')} label="Italic" />
-              <ToolBtn icon={Underline} onClick={() => onFormat('underline')} label="Underline" />
-              <Divider />
-              <ToolBtn icon={AlignLeft} onClick={() => onFormat('justifyLeft')} label="Align Left" />
-              <ToolBtn icon={AlignCenter} onClick={() => onFormat('justifyCenter')} label="Align Center" />
-              <ToolBtn icon={AlignRight} onClick={() => onFormat('justifyRight')} label="Align Right" />
-              <Divider />
-              <ToolBtn icon={List} onClick={() => onFormat('insertUnorderedList')} label="Bullet List" />
-              <ToolBtn icon={ListOrdered} onClick={() => onFormat('insertOrderedList')} label="Numbered List" />
-              
-              <Divider />
-              
-              <div className="relative">
-                <button
-                  onClick={() => setShowAiMenu(!showAiMenu)}
-                  className={`
-                    flex items-center gap-2 px-2 h-[26px] mx-1 text-xs font-bold tracking-wide
-                    border-t border-l border-b-black border-r-black
-                    transition-colors
-                    ${isAiLoading 
-                      ? 'bg-cw-selection cursor-wait border-t-black border-l-black border-b-cw-comment border-r-cw-comment' 
-                      : 'bg-cw-purple text-cw-bg border-cw-comment hover:brightness-110 active:border-t-black active:border-l-black active:border-b-cw-comment active:border-r-cw-comment'
-                    }
-                  `}
-                >
-                  <Sparkles size={12} />
-                  {isAiLoading ? 'THINKING...' : 'AI ASSIST'}
-                  <ChevronDown size={10} />
-                </button>
-
-                {showAiMenu && (
-                  <div className="absolute top-full left-0 mt-1 w-48 bg-cw-panel border-2 border-t-cw-comment border-l-cw-comment border-b-black border-r-black shadow-xl z-50">
-                    {[
-                      { label: 'Fix Grammar', mode: AiMode.FixGrammar },
-                      { label: 'Summarize', mode: AiMode.Summarize },
-                      { label: 'Expand Text', mode: AiMode.Expand },
-                      { label: 'Make Professional', mode: AiMode.ToneProfessional },
-                    ].map((item) => (
-                      <button
-                        key={item.mode}
-                        onClick={() => {
-                          onAiAction(item.mode);
-                          setShowAiMenu(false);
-                        }}
-                        className="w-full text-left px-4 py-2 text-xs text-cw-text hover:bg-cw-selection hover:text-cw-pink transition-colors"
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {showAiMenu && (
-              <div 
-                className="fixed inset-0 z-10" 
-                onClick={() => setShowAiMenu(false)}
-              />
-            )}
-          </div>
-        );
-      };
-
-      // --- MAIN APPLICATION ---
-      const App = () => {
-        const editorRef = useRef(null);
-        const fileInputRef = useRef(null);
-        const [isAiLoading, setIsAiLoading] = useState(false);
-        const [wordCount, setWordCount] = useState(0);
-        const [charCount, setCharCount] = useState(0);
-        const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-        const [isMaximized, setIsMaximized] = useState(false);
-        const [theme, setTheme] = useState('modern');
-        const [wordWrap, setWordWrap] = useState(true);
-
+        // Keyboard Navigation (Main Window)
         useEffect(() => {
-          if (editorRef.current) {
-            // Only set if empty to avoid overwriting user progress if hot-reloading (though not applicable in build)
-            if (editorRef.current.innerHTML === "") {
-                editorRef.current.innerHTML = INITIAL_CONTENT;
-            }
-            updateStats();
-          }
-        }, []);
+          const handleKeyDown = (e) => handleNavigation(e.key);
+          window.addEventListener('keydown', handleKeyDown);
+          return () => window.removeEventListener('keydown', handleKeyDown);
+        }, [currentIndex, slides]);
 
-        useEffect(() => {
-          const timer = setInterval(() => {
-            setCurrentTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-          }, 1000);
-          
-          document.body.setAttribute('data-theme', theme);
-          
-          return () => clearInterval(timer);
-        }, [theme]);
-
-        const updateStats = () => {
-          if (!editorRef.current) return;
-          const text = editorRef.current.innerText || "";
-          setWordCount(text.trim().length === 0 ? 0 : text.trim().split(/\s+/).length);
-          setCharCount(text.length);
-        };
-
-        const handleFormat = (command, value) => {
-          document.execCommand(command, false, value);
-          editorRef.current?.focus();
-          updateStats();
-        };
-
-        const handleAiAction = async (mode) => {
-          const selection = window.getSelection();
-          if (!selection || selection.rangeCount === 0 || selection.toString().trim().length === 0) {
-            alert("Please select some text to process with AI.");
-            return;
-          }
-          
-          const text = selection.toString();
-          setIsAiLoading(true);
-          
-          try {
-            const result = await generateAiContent(text, mode);
-            if (result) {
-              document.execCommand('insertText', false, result);
-            }
-          } catch (e) {
-            console.error("AI Error:", e);
-            alert("Failed to generate AI content.");
-          } finally {
-            setIsAiLoading(false);
-            updateStats();
+        const handleNavigation = (key) => {
+          if (key === 'ArrowRight' || key === 'ArrowDown' || key === ' ') {
+            setCurrentIndex(prev => Math.min(prev + 1, slides.length - 1));
+          } else if (key === 'ArrowLeft' || key === 'ArrowUp') {
+            setCurrentIndex(prev => Math.max(prev - 1, 0));
           }
         };
 
-        const handleMenuAction = (action) => {
-          switch(action) {
-            case 'file-new':
-              if (confirm("Create new file? Current content will be lost.")) {
-                if (editorRef.current) editorRef.current.innerHTML = "";
-                updateStats();
-              }
-              break;
-            case 'file-open':
-              fileInputRef.current?.click();
-              break;
-            case 'file-save':
-              const blob = new Blob([editorRef.current.innerHTML], {type: "text/html;charset=utf-8"});
-              const a = document.createElement("a");
-              a.href = URL.createObjectURL(blob);
-              a.download = "document.html"; 
-              a.click();
-              setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-              break;
-            case 'file-exit':
-              try { window.close(); } catch(e) { alert("Cannot close window via script."); }
-              break;
-            case 'undo': document.execCommand('undo'); break;
-            case 'redo': document.execCommand('redo'); break;
-            case 'select-all': 
-              setTimeout(() => {
-                editorRef.current?.focus();
-                document.execCommand('selectAll');
-              }, 10);
-              break;
-            case 'toggle-wrap':
-              setWordWrap(!wordWrap);
-              break;
-            case 'toggle-theme':
-              setTheme(prev => prev === 'modern' ? 'classic' : 'modern');
-              break;
-            case 'help-about':
-              alert("CodeWord 98\nA retro-styled editor with AI powers.\nVersion 1.0");
-              break;
-          }
-        };
-
-        const handleFileChange = (e) => {
+        const handleOpenFile = (e) => {
           const file = e.target.files[0];
           if (!file) return;
           const reader = new FileReader();
           reader.onload = (ev) => {
-            if (editorRef.current) {
-              editorRef.current.innerHTML = ev.target.result;
-              updateStats();
-            }
+            setRawText(ev.target.result);
+            setCurrentIndex(0);
           };
           reader.readAsText(file);
         };
 
-        const toggleMaximize = () => setIsMaximized(!isMaximized);
+        const startPresentation = () => {
+          if (popupWindow && !popupWindow.closed) {
+            popupWindow.focus();
+          } else {
+            const win = window.open('', 'PresentationViewer', 'width=1024,height=768');
+            if (win) {
+              win.document.write(POPUP_HTML_TEMPLATE);
+              win.document.close();
+              setPopupWindow(win);
+              
+              // Initial push after a slight delay to ensure load
+              setTimeout(() => {
+                const current = slides[currentIndex];
+                if (current) win.postMessage({ title: current.title, body: current.body }, '*');
+              }, 500);
+            } else {
+              alert("Popup blocked! Please allow popups for this site.");
+            }
+          }
+        };
+
+        const handleAiGenerate = async (topic) => {
+          setIsAiLoading(true);
+          const result = await generateSlideDeck(topic);
+          if (result) {
+            setRawText(result);
+            setCurrentIndex(0);
+            setShowAiModal(false);
+          }
+          setIsAiLoading(false);
+        };
+
+        const currentSlide = slides[currentIndex] || { title: 'End of Deck', body: '' };
+        const nextSlide = slides[currentIndex + 1];
 
         return (
-          <div className={`h-full w-full flex items-center justify-center p-4 bg-cw-bg font-sans transition-all duration-300 ${isMaximized ? 'p-0' : ''}`}>
+          <div className="flex h-screen bg-gray-950 text-gray-200 overflow-hidden">
             
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
-              accept=".html,.txt" 
-              onChange={handleFileChange} 
-            />
-
-            <div className={`
-              flex flex-col bg-cw-panel shadow-[10px_10px_0_0_rgba(0,0,0,0.5)]
-              border-2 border-t-cw-comment border-l-cw-comment border-b-black border-r-black
-              ${isMaximized ? 'w-full h-full' : 'w-full max-w-5xl h-[85vh]'}
-            `}>
-              
-              {/* Title Bar */}
-              <div className="h-8 bg-gradient-to-r from-cw-purple to-cw-pink flex items-center justify-between px-1 select-none">
-                <div className="flex items-center gap-2 px-1">
-                  <FileText size={16} className="text-cw-bg" />
-                  <span className="font-bold text-cw-bg text-sm tracking-wide">CodeWord 98 - Untitled.doc</span>
-                </div>
-                <div className="flex gap-1">
-                  <WinButton><Minus size={10} /></WinButton>
-                  <WinButton onClick={toggleMaximize}><Square size={10} /></WinButton>
-                  <WinButton red onClick={() => window.location.reload()}><X size={12} /></WinButton>
-                </div>
+            {/* --- LEFT SIDEBAR: THUMBNAILS --- */}
+            <div className="w-64 flex flex-col border-r border-gray-800 bg-gray-900">
+              <div className="p-4 border-b border-gray-800 flex items-center justify-between">
+                <h1 className="font-bold text-brand-blue flex items-center gap-2">
+                  <Presentation size={20} />
+                  Slides
+                </h1>
+                <span className="text-xs text-gray-500">{slides.length} total</span>
               </div>
-
-              {/* Menu Bar */}
-              <MenuBar onMenuAction={handleMenuAction} />
-
-              {/* Toolbar */}
-              <Toolbar 
-                onFormat={handleFormat} 
-                onAiAction={handleAiAction} 
-                isAiLoading={isAiLoading} 
-              />
-
-              {/* Ruler */}
-              <div className="h-6 bg-cw-panel border-b border-cw-comment flex items-end px-4 overflow-hidden relative">
-                <div className="w-full h-1/2 bg-cw-paper border border-cw-comment flex justify-between px-2">
-                  {[...Array(20)].map((_, i) => (
-                    <div key={i} className="h-full w-px bg-cw-comment opacity-50 text-[8px] pt-1">{i % 5 === 0 ? i : ''}</div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Editor Area */}
-              <div className="flex-1 bg-cw-selection/30 overflow-auto p-4 sm:p-8 flex justify-center relative cursor-text" onClick={() => editorRef.current?.focus()}>
-                <div 
-                  className="bg-cw-paper w-full max-w-[800px] min-h-[800px] sm:min-h-[1000px] shadow-2xl relative transition-colors duration-300"
-                  style={{ fontFamily: '"Fira Code", monospace' }}
-                >
-                   <div 
-                    ref={editorRef}
-                    contentEditable
+              <div className="flex-1 overflow-y-auto p-2 space-y-2">
+                {slides.map((slide, idx) => (
+                  <div 
+                    key={idx}
+                    onClick={() => setCurrentIndex(idx)}
                     className={`
-                      w-full h-full p-8 sm:p-12 outline-none text-cw-text leading-relaxed 
-                      selection:bg-cw-pink selection:text-cw-bg
-                      ${wordWrap ? 'whitespace-pre-wrap' : 'whitespace-pre overflow-x-auto'}
+                      p-3 rounded-lg cursor-pointer border transition-all
+                      ${idx === currentIndex 
+                        ? 'bg-blue-900/20 border-brand-blue shadow-lg shadow-blue-900/10' 
+                        : 'bg-gray-800 border-gray-700 hover:border-gray-500'
+                      }
                     `}
-                    onInput={updateStats}
-                    spellCheck={false}
-                  />
-                </div>
+                  >
+                    <div className="flex justify-between items-start mb-1">
+                      <span className={`text-xs font-bold ${idx === currentIndex ? 'text-brand-blue' : 'text-gray-400'}`}>#{idx + 1}</span>
+                    </div>
+                    <h4 className="text-sm font-semibold truncate text-gray-100">{slide.title}</h4>
+                    <p className="text-xs text-gray-400 truncate mt-1 opacity-70">{slide.body.substring(0, 30)}...</p>
+                  </div>
+                ))}
               </div>
-
-              {/* Status Bar */}
-              <div className="h-7 bg-cw-panel border-t border-cw-comment flex items-center justify-between px-3 text-xs text-cw-comment select-none">
-                <div className="flex gap-4 sm:gap-6">
-                  <span className="flex items-center gap-1">Page 1/1</span>
-                  <span className="hidden sm:flex items-center gap-1 border-l border-cw-selection pl-4">Sec 1</span>
-                  <span className="flex items-center gap-1 border-l border-cw-selection pl-4">{wordCount} words</span>
-                  <span className="hidden sm:flex items-center gap-1 border-l border-cw-selection pl-4">{charCount} chars</span>
-                </div>
-                <div className="flex gap-6">
-                  <span className="uppercase hidden sm:inline">{theme === 'modern' ? 'MODERN' : 'CLASSIC'}</span>
-                  <span className="uppercase text-cw-text font-bold hidden sm:inline">INS</span>
-                  <span>{currentTime}</span>
-                </div>
+              
+              {/* File Controls */}
+              <div className="p-3 border-t border-gray-800 bg-gray-900 grid grid-cols-2 gap-2">
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  accept=".txt" 
+                  onChange={handleOpenFile} 
+                />
+                <button 
+                  onClick={() => fileInputRef.current.click()}
+                  className="flex items-center justify-center gap-2 p-2 rounded bg-gray-800 hover:bg-gray-700 text-xs font-medium border border-gray-700 transition-colors"
+                >
+                  <Upload size={14} /> Open TXT
+                </button>
+                 <button 
+                  onClick={() => setShowAiModal(true)}
+                  className="flex items-center justify-center gap-2 p-2 rounded bg-purple-900/30 hover:bg-purple-900/50 text-purple-300 text-xs font-medium border border-purple-800/50 transition-colors"
+                >
+                  <Sparkles size={14} /> AI Deck
+                </button>
               </div>
             </div>
+
+            {/* --- RIGHT MAIN: PREVIEW & CONTROLS --- */}
+            <div className="flex-1 flex flex-col h-full relative">
+              
+              {/* Toolbar */}
+              <div className="h-14 border-b border-gray-800 flex items-center justify-between px-6 bg-gray-900/50 backdrop-blur-md z-10">
+                <div className="flex items-center gap-4">
+                  <h2 className="text-lg font-semibold text-white tracking-wide">
+                     {currentSlide.title}
+                  </h2>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center bg-gray-800 rounded-lg p-1 mr-4">
+                    <button 
+                      onClick={() => handleNavigation('ArrowLeft')}
+                      className="p-1.5 hover:bg-gray-700 rounded text-gray-400 hover:text-white transition"
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+                    <span className="mx-3 font-mono text-sm">{currentIndex + 1} / {slides.length}</span>
+                    <button 
+                      onClick={() => handleNavigation('ArrowRight')}
+                      className="p-1.5 hover:bg-gray-700 rounded text-gray-400 hover:text-white transition"
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                  </div>
+
+                  <button 
+                    onClick={startPresentation}
+                    className={`
+                      flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm shadow-lg transition-all
+                      ${popupWindow && !popupWindow.closed 
+                        ? 'bg-green-600 hover:bg-green-700 text-white shadow-green-900/20' 
+                        : 'bg-brand-blue hover:bg-blue-600 text-white shadow-blue-900/20'
+                      }
+                    `}
+                  >
+                    {popupWindow && !popupWindow.closed ? <MonitorPlay size={16} /> : <Play size={16} />}
+                    {popupWindow && !popupWindow.closed ? 'Presenting...' : 'Start Presentation'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Main Workspace */}
+              <div className="flex-1 overflow-auto p-8 flex gap-8 items-start justify-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-900 via-gray-950 to-gray-950">
+                
+                {/* Current Slide (Large) */}
+                <div className="flex-1 max-w-3xl flex flex-col gap-2">
+                  <div className="flex justify-between items-end px-1">
+                    <span className="text-sm font-medium text-brand-blue uppercase tracking-wider">Current Slide</span>
+                  </div>
+                  <div className="aspect-video bg-white text-black rounded-xl shadow-2xl p-8 sm:p-12 flex flex-col overflow-hidden relative border-4 border-gray-800">
+                     <h1 className="text-4xl font-bold mb-6 text-gray-900 border-b-4 border-yellow-400 pb-2 inline-block self-start">
+                       {currentSlide.title}
+                     </h1>
+                     <div className="text-xl leading-relaxed whitespace-pre-line text-gray-700">
+                       {currentSlide.body}
+                     </div>
+                  </div>
+                </div>
+
+                {/* Next Slide (Teleprompter style) */}
+                <div className="w-80 hidden xl:flex flex-col gap-2 opacity-80 sticky top-0">
+                   <div className="flex justify-between items-end px-1">
+                    <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">Up Next</span>
+                  </div>
+                  {nextSlide ? (
+                    <div className="aspect-video bg-gray-800 rounded-lg border border-gray-700 p-4 flex flex-col overflow-hidden text-gray-400 scale-95 origin-top">
+                      <h3 className="font-bold text-lg mb-2 text-gray-300">{nextSlide.title}</h3>
+                      <p className="text-xs leading-relaxed line-clamp-6">{nextSlide.body}</p>
+                    </div>
+                  ) : (
+                    <div className="aspect-video bg-gray-800/30 rounded-lg border border-gray-800 border-dashed flex items-center justify-center text-gray-600 text-sm">
+                      End of Presentation
+                    </div>
+                  )}
+
+                  <div className="mt-8 bg-gray-800/50 p-4 rounded-lg border border-gray-700">
+                    <h4 className="text-xs font-bold text-gray-400 mb-2 uppercase">Presenter Notes</h4>
+                    <p className="text-sm text-gray-300 italic">
+                      Remember to pause after the key points.
+                      Don't read directly from the slide.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* --- AI MODAL --- */}
+            {showAiModal && (
+              <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div className="bg-gray-900 border border-gray-700 p-6 rounded-2xl w-full max-w-md shadow-2xl">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                      <Sparkles className="text-purple-400" /> AI Deck Generator
+                    </h3>
+                    <button onClick={() => setShowAiModal(false)} className="text-gray-500 hover:text-white"><X size={20}/></button>
+                  </div>
+                  <p className="text-gray-400 text-sm mb-4">Enter a topic, and AI will generate a slide deck for you.</p>
+                  <form onSubmit={(e) => { e.preventDefault(); handleAiGenerate(e.target.topic.value); }}>
+                    <input 
+                      name="topic" 
+                      autoFocus 
+                      placeholder="e.g. The History of Space Exploration" 
+                      className="w-full bg-gray-950 border border-gray-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-purple-500 outline-none mb-4"
+                    />
+                    <button 
+                      type="submit" 
+                      disabled={isAiLoading}
+                      className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-lg transition-colors flex justify-center items-center gap-2"
+                    >
+                      {isAiLoading ? 'Generating...' : 'Generate Deck'}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            )}
+
           </div>
         );
       };
 
-      try {
-        const rootElement = document.getElementById('root');
-        if (rootElement) {
-          const root = createRoot(rootElement);
-          root.render(<App />);
-        }
-      } catch (err) {
-        console.error("Rendering Error:", err);
-      }
+      const root = createRoot(document.getElementById('root'));
+      root.render(<App />);
     </script>
   </body>
 </html>
