@@ -21,23 +21,23 @@
 
 <style>
   :root {
-    /* Paleta baseada na imagem (Estilo Dracula/Dark) */
-    --bg-app: #eef1f5;        /* Fundo externo (cinza claro/gradiente suave) */
-    --window-bg: #282a36;     /* Fundo da janela (Roxo Escuro Profundo) */
-    --fg-primary: #f8f8f2;    /* Texto principal (Branco Suave) */
+    /* Paleta Dracula Oficial */
+    --bg-app: #eef1f5;
+    --window-bg: #282a36;     /* Background Principal */
+    --fg-primary: #f8f8f2;    /* Texto */
     
-    /* Cores de Sintaxe */
-    --accent-pink: #ff79c6;   /* Rosa (keywords: async, await, return) */
-    --accent-cyan: #8be9fd;   /* Ciano (funções, tipos) */
-    --accent-green: #50fa7b;  /* Verde (sucesso, strings) */
-    --accent-orange: #ffb86c; /* Laranja (parâmetros, strings) */
-    --accent-purple: #bd93f9; /* Roxo (números, constantes) */
-    --accent-yellow: #f1fa8c; /* Amarelo (avisos) */
-    --comment: #6272a4;       /* Cinza Azulado (comentários) */
+    /* Cores de Sintaxe e UI */
+    --accent-pink: #ff79c6;
+    --accent-cyan: #8be9fd;
+    --accent-green: #50fa7b;
+    --accent-orange: #ffb86c;
+    --accent-purple: #bd93f9;
+    --accent-yellow: #f1fa8c;
+    --comment: #6272a4;
     
     /* UI */
     --selection: #44475a;
-    --line-highlight: #44475a;
+    --current-line: #44475a;
   }
 
   /* Reset */
@@ -46,8 +46,9 @@
   html, body {
     height: 100%;
     margin: 0;
-    font-family: 'JetBrains Mono', monospace; /* Fonte de código */
-    background: radial-gradient(circle at center, #d0d6e2 0%, #bdc3c7 100%); /* Fundo suave estilo macOS */
+    font-family: 'JetBrains Mono', monospace;
+    /* Fundo externo neutro/suave para destacar o editor escuro */
+    background: radial-gradient(circle at center, #d0d6e2 0%, #bdc3c7 100%);
     color: var(--fg-primary);
     overflow: hidden;
   }
@@ -70,7 +71,7 @@
     border-radius: 12px;
     box-shadow: 
       0 20px 60px rgba(0,0,0,0.55),
-      0 0 0 1px rgba(0,0,0,0.2); /* Borda sutil */
+      0 0 0 1px rgba(0,0,0,0.2);
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -86,10 +87,11 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    background: var(--window-bg); /* Mesma cor para continuidade */
+    background: var(--window-bg);
+    user-select: none;
   }
 
-  /* Bolinhas Mac (Flat e Vibrantes) */
+  /* Bolinhas Mac */
   .window-controls {
     display: flex;
     gap: 8px;
@@ -102,70 +104,93 @@
   .dot.yellow { background: #ffbd2e; }
   .dot.green { background: #27c93f; }
 
-  /* Barra de Ferramentas (Botões estilo "Pill") */
+  /* Barra de Ferramentas */
   .toolbar {
     display: flex;
     gap: 10px;
-    margin-left: auto; /* Empurra para a direita */
+    margin-left: auto;
   }
 
   .btn {
     background: rgba(255, 255, 255, 0.05);
     border: none;
     color: var(--comment);
-    padding: 6px 12px;
+    padding: 8px 14px;
     border-radius: 6px;
     font-family: inherit;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid transparent;
   }
+  
   .btn:hover {
     background: rgba(255, 255, 255, 0.1);
     color: var(--fg-primary);
+    border-color: rgba(255,255,255,0.1);
+  }
+
+  .btn:active {
+    transform: scale(0.96);
+    background: rgba(255, 255, 255, 0.02);
   }
   
+  /* Botão Salvar (Rosa Dracula) */
   .btn-primary {
     background: var(--accent-pink);
-    color: var(--window-bg);
+    color: #282a36;
   }
   .btn-primary:hover {
     background: #ff91cf;
-    color: var(--window-bg);
+    color: #282a36;
     box-shadow: 0 0 15px rgba(255, 121, 198, 0.4);
   }
+  .btn-primary:active {
+    transform: scale(0.96);
+  }
 
+  /* Botão AI (Gradiente Dracula) */
   .btn-ai {
     background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
-    color: var(--window-bg);
+    color: #282a36;
     font-weight: bold;
   }
   .btn-ai:hover {
-    filter: brightness(1.2);
+    filter: brightness(1.1);
     box-shadow: 0 0 15px rgba(139, 233, 253, 0.4);
+  }
+  .btn-ai:active {
+    transform: scale(0.96);
   }
 
   /* Input Nome do Arquivo */
   .filename-display {
-    color: var(--comment);
+    color: var(--fg-primary);
     font-size: 13px;
-    background: transparent;
-    border: none;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid transparent;
+    border-radius: 4px;
     text-align: center;
     width: 200px;
+    padding: 4px;
     font-family: inherit;
     outline: none;
+    transition: 0.2s;
   }
-  .filename-display:focus { color: var(--fg-primary); }
+  .filename-display:focus {
+    border-color: var(--comment);
+    background: rgba(0,0,0,0.4);
+  }
   .file-input { display: none; }
 
   /* Área de Texto Principal */
   .editor-container {
     flex: 1;
     position: relative;
-    padding: 10px 0;
+    padding: 0;
     display: flex;
+    overflow: hidden; /* Importante para o scroll funcionar corretamente */
   }
   
   /* Números de linha */
@@ -177,7 +202,9 @@
     line-height: 1.6;
     user-select: none;
     opacity: 0.5;
-    border-right: 1px solid rgba(255,255,255,0.05);
+    background: var(--window-bg);
+    min-width: 50px;
+    overflow: hidden;
   }
 
   textarea {
@@ -186,7 +213,7 @@
     height: 100%;
     background: transparent;
     border: none;
-    color: var(--fg-primary); /* Cor padrão */
+    color: var(--fg-primary);
     padding: 20px;
     font-size: 15px;
     line-height: 1.6;
@@ -194,21 +221,9 @@
     outline: none;
     font-family: 'JetBrains Mono', monospace;
     white-space: pre;
-    overflow-y: auto;
-    /* Scrollbar customizada */
+    overflow-y: auto; /* Scroll apenas aqui */
     scrollbar-width: thin;
     scrollbar-color: var(--selection) transparent;
-  }
-
-  /* Cores de Sintaxe Simuladas (via CSS classes se usássemos um highlighter, 
-     mas no textarea puro usamos a cor base. O "Visual" vem do tema geral) */
-  textarea::placeholder {
-    color: var(--comment);
-    opacity: 0.7;
-  }
-  
-  textarea::selection {
-    background: var(--selection);
   }
 
   /* Rodapé Minimalista */
@@ -216,14 +231,17 @@
     padding: 8px 20px;
     font-size: 12px;
     color: var(--comment);
+    background: #21222c; /* Levemente mais escuro */
     display: flex;
-    justify-content: flex-end;
-    gap: 15px;
+    justify-content: space-between;
+    align-items: center;
     border-top: 1px solid rgba(255,255,255,0.05);
   }
-  .status-item { display: flex; align-items: center; gap: 6px; }
-  .dot-status { width: 8px; height: 8px; background: var(--comment); border-radius: 50%; }
-  .dot-status.active { background: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); }
+  .status-left { display: flex; gap: 15px; }
+  .status-right { display: flex; gap: 15px; align-items: center; }
+
+  .dot-status { width: 8px; height: 8px; background: var(--comment); border-radius: 50%; display: inline-block; margin-right: 6px; }
+  .dot-status.active { background: var(--accent-green); box-shadow: 0 0 6px var(--accent-green); }
   .dot-status.busy { background: var(--accent-orange); animation: pulse 0.8s infinite; }
 
   @keyframes pulse { 50% { opacity: 0.5; } }
@@ -250,8 +268,8 @@
   .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.6);
-    backdrop-filter: blur(4px);
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(2px);
     z-index: 100;
     display: flex;
     justify-content: center;
@@ -268,13 +286,16 @@
     border-radius: 12px;
     border: 1px solid var(--comment);
     width: 450px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
   }
   
   .modal h2 {
     color: var(--accent-pink);
     margin-top: 0;
     font-size: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
 
   .modal-grid {
@@ -288,12 +309,13 @@
     background: rgba(255,255,255,0.05);
     border: 1px solid var(--comment);
     color: var(--fg-primary);
-    padding: 12px;
+    padding: 14px;
     border-radius: 8px;
     cursor: pointer;
     transition: 0.2s;
     font-family: inherit;
     font-size: 13px;
+    text-align: center;
   }
   .modal-btn:hover {
     border-color: var(--accent-cyan);
@@ -303,11 +325,10 @@
 
   /* Responsivo */
   @media (max-width: 600px) {
-    .wrap { padding: 10px; }
-    .window { height: 95vh; }
-    .titlebar { flex-direction: column; align-items: flex-start; }
+    .wrap { padding: 0; max-width: 100%; }
+    .window { height: 100vh; border-radius: 0; }
+    .titlebar { flex-wrap: wrap; }
     .toolbar { width: 100%; justify-content: space-between; margin-top: 10px; }
-    .filename-display { display: none; }
   }
 </style>
 </head>
@@ -322,13 +343,13 @@
         <div class="dot yellow"></div>
         <div class="dot green"></div>
       </div>
-      <input type="text" id="fileName" class="filename-display" value="script.js" spellcheck="false">
+      <input type="text" id="fileName" class="filename-display" value="untitled.txt" spellcheck="false" placeholder="Nome do arquivo...">
       
       <div class="toolbar">
         <input type="file" id="fileInput" class="file-input">
-        <button class="btn" id="btnOpen" title="Abrir Arquivo">Abrir</button>
-        <button class="btn btn-primary" id="btnSave" title="Salvar">Salvar</button>
-        <button class="btn btn-ai" id="btnAi">AI Magic ✨</button>
+        <button class="btn" id="btnOpen">Abrir</button>
+        <button class="btn btn-primary" id="btnSave">Salvar</button>
+        <button class="btn btn-ai" id="btnAi">AI ✨</button>
       </div>
     </div>
 
@@ -344,11 +365,11 @@
 
     <!-- Statusbar -->
     <div class="statusbar">
-      <div class="status-item">
+      <div class="status-left">
         <span id="charCount">0 chars</span>
       </div>
-      <div class="status-item">
-        <div class="dot-status" id="statusDot"></div>
+      <div class="status-right">
+        <div class="dot-status active" id="statusDot"></div>
         <span id="statusMsg" style="color: var(--accent-green)">Ready</span>
       </div>
     </div>
@@ -359,20 +380,20 @@
 <div class="modal-overlay" id="aiModal">
   <div class="modal">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h2>AI Assistant</h2>
-      <button id="closeAi" style="background:none; border:none; color:var(--comment); cursor:pointer; font-size:20px;">&times;</button>
+      <h2><span>✨</span> AI Assistant</h2>
+      <button id="closeAi" style="background:none; border:none; color:var(--comment); cursor:pointer; font-size:24px;">&times;</button>
     </div>
-    <p style="color: var(--comment); font-size: 14px;">Selecione uma ação para transformar seu código ou texto.</p>
+    <p style="color: var(--comment); font-size: 14px; margin-bottom: 20px;">Use a inteligência do Google Gemini 2.5 para melhorar seu código.</p>
     
     <div class="modal-grid">
-      <button class="modal-btn" onclick="runAi('fix')">Corrigir Bugs/Gramática</button>
-      <button class="modal-btn" onclick="runAi('refactor')">Refatorar / Melhorar</button>
-      <button class="modal-btn" onclick="runAi('explain')">Explicar Código</button>
-      <button class="modal-btn" onclick="runAi('convert')">Converter p/ Python</button>
+      <button class="modal-btn" onclick="runAi('fix')">Corrigir Bugs</button>
+      <button class="modal-btn" onclick="runAi('refactor')">Refatorar</button>
+      <button class="modal-btn" onclick="runAi('explain')">Explicar</button>
+      <button class="modal-btn" onclick="runAi('convert')">Para Python</button>
     </div>
     
-    <div id="loading" style="display:none; margin-top:15px; color:var(--accent-cyan); font-size:12px;">
-      Processando com Gemini 2.5...
+    <div id="loading" style="display:none; margin-top:20px; text-align:center; color:var(--accent-cyan); font-size:13px;">
+      ⚡ Processando com Gemini...
     </div>
   </div>
 </div>
@@ -380,9 +401,8 @@
 <script type="module">
   import { GoogleGenAI } from "@google/genai";
 
-  // --- CONFIGURAÇÃO ---
-  // Para publicar no Github, o ideal é que o usuário insira a chave.
-  // Em dev local, você pode preencher a string abaixo.
+  // --- CONFIGURAÇÃO DA CHAVE ---
+  // Se quiser deixar fixa para testes, coloque abaixo.
   const API_KEY_HARDCODED = ""; 
 
   const getApiKey = () => {
@@ -393,7 +413,7 @@
   const API_KEY = getApiKey();
   const ai = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
 
-  // --- UI Elements ---
+  // --- Elementos ---
   const $ = (id) => document.getElementById(id);
   const editor = $("editor");
   const lineNumbers = $("lineNumbers");
@@ -402,7 +422,7 @@
   const statusDot = $("statusDot");
   const charCount = $("charCount");
 
-  // --- Editor Logic ---
+  // --- Lógica do Editor ---
   const updateLines = () => {
     const lines = editor.value.split('\n').length;
     lineNumbers.innerHTML = Array(lines).fill(0).map((_, i) => i + 1).join('<br>');
@@ -414,21 +434,25 @@
     statusMsg.style.color = type === 'busy' ? 'var(--accent-orange)' : 'var(--accent-green)';
   };
 
+  // Sincronia de Scroll e Linhas
   editor.addEventListener('input', () => {
     updateLines();
     charCount.textContent = editor.value.length + " chars";
-    updateStatus("Editing...");
-    // Debounce save state reset
-    clearTimeout(window.saveTimeout);
-    window.saveTimeout = setTimeout(() => updateStatus("Unsaved changes"), 1000);
+    updateStatus("Editando...");
   });
 
   editor.addEventListener('scroll', () => {
     lineNumbers.scrollTop = editor.scrollTop;
   });
 
-  // --- File I/O ---
-  $("btnOpen").addEventListener('click', () => $("fileInput").click());
+  // --- Botões ---
+
+  // 1. Abrir Arquivo
+  $("btnOpen").addEventListener('click', () => {
+    // Reseta o value para garantir que o evento 'change' dispare mesmo se escolher o mesmo arquivo
+    $("fileInput").value = ''; 
+    $("fileInput").click();
+  });
   
   $("fileInput").addEventListener('change', async (e) => {
     const file = e.target.files[0];
@@ -438,20 +462,37 @@
       editor.value = await file.text();
       fileName.value = file.name;
       updateLines();
-      updateStatus("File loaded");
+      updateStatus("Arquivo carregado");
     } catch(err) {
-      alert("Erro ao ler arquivo");
+      alert("Erro ao ler arquivo: " + err);
     }
   });
 
+  // 2. Salvar Arquivo (CORRIGIDO)
   $("btnSave").addEventListener('click', () => {
-    const blob = new Blob([editor.value], {type: "text/plain"});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName.value;
-    a.click();
-    updateStatus("Saved successfully");
+    try {
+      const content = editor.value;
+      const name = fileName.value.trim() || "untitled.txt";
+      
+      const blob = new Blob([content], {type: "text/plain;charset=utf-8"});
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      
+      // Essencial para Firefox e compatibilidade geral
+      document.body.appendChild(a);
+      a.click();
+      
+      // Limpeza
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 100);
+      
+      updateStatus("Salvo com sucesso!");
+    } catch (e) {
+      alert("Erro ao salvar: " + e.message);
+    }
   });
 
   // --- Drag & Drop ---
@@ -468,19 +509,20 @@
       editor.value = await file.text();
       fileName.value = file.name;
       updateLines();
-      updateStatus("File dropped");
+      updateStatus("Arquivo solto aqui");
     }
   });
 
-  // --- AI Logic ---
+  // --- Lógica da IA ---
   const aiModal = $("aiModal");
   const loading = $("loading");
 
   $("btnAi").addEventListener('click', () => {
     if(!API_KEY) {
-      const key = prompt("Por favor, insira sua Google Gemini API Key:");
+      const key = prompt("Para usar a IA, insira sua chave da API Google Gemini:");
       if(key) {
         localStorage.setItem("GEMINI_API_KEY", key);
+        alert("Chave salva! Recarregue a página para aplicar.");
         location.reload();
       }
       return;
@@ -490,11 +532,12 @@
 
   $("closeAi").addEventListener('click', () => aiModal.classList.remove('open'));
 
+  // Função Global para ser chamada pelos botões do modal
   window.runAi = async (action) => {
     if(!editor.value.trim()) return alert("O editor está vazio!");
     
     loading.style.display = 'block';
-    updateStatus("AI Processing...", "busy");
+    updateStatus("IA Processando...", "busy");
     
     let promptText = "";
     const code = editor.value;
@@ -502,7 +545,7 @@
     switch(action) {
       case 'fix': promptText = "Fix bugs, typos and improve syntax in the following code/text. Output ONLY the fixed code/text:\n\n" + code; break;
       case 'refactor': promptText = "Refactor this code to be cleaner and more efficient. Output ONLY the code:\n\n" + code; break;
-      case 'explain': promptText = "Explain briefly what this code/text does:\n\n" + code; break;
+      case 'explain': promptText = "Explain briefly what this code/text does in Portuguese:\n\n" + code; break;
       case 'convert': promptText = "Convert this code to Python. Output ONLY the Python code:\n\n" + code; break;
     }
 
@@ -513,24 +556,31 @@
       });
       
       const result = response.text;
+      
       if(action === 'explain') {
-        editor.value = code + "\n\n/* AI EXPLANATION:\n" + result + "\n*/";
+        // Se for explicação, comenta no topo
+        editor.value = "/* 🤖 EXPLICAÇÃO DA IA:\n" + result.replace(/\*\//g, "* /") + "\n*/\n\n" + code;
       } else {
-        editor.value = result.replace(/```\w*\n/g, '').replace(/```$/g, ''); // Clean markdown blocks if any
+        // Limpa blocos de markdown ``` se a IA retornar
+        let cleanText = result;
+        if (cleanText.startsWith('```')) {
+          cleanText = cleanText.replace(/^```\w*\n?/, '').replace(/\n?```$/, '');
+        }
+        editor.value = cleanText;
       }
       
       updateLines();
       aiModal.classList.remove('open');
-      updateStatus("AI Task Complete");
+      updateStatus("Concluído pela IA");
     } catch(err) {
-      alert("AI Error: " + err.message);
-      updateStatus("AI Error");
+      alert("Erro na IA: " + err.message);
+      updateStatus("Erro na IA");
     } finally {
       loading.style.display = 'none';
     }
   };
 
-  // Init
+  // Inicialização
   updateLines();
 </script>
 </body>
