@@ -87,6 +87,7 @@
     gap: 16px;
     background: var(--window-bg);
     user-select: none;
+    z-index: 10;
   }
 
   .window-controls {
@@ -179,47 +180,86 @@
     border: 0; 
   }
 
-  /* Área de Texto Principal */
-  .editor-container {
+  /* Área Principal do Editor (Wrapper) */
+  .main-area {
+    display: flex;
     flex: 1;
     position: relative;
-    padding: 0;
-    display: flex;
-    overflow: hidden; 
+    overflow: hidden;
+    background: var(--window-bg);
   }
-  
+
+  /* Números de Linha */
   .line-numbers {
-    padding: 20px 10px 20px 20px;
+    width: 50px;
+    padding: 20px 5px 20px 0;
     text-align: right;
     color: var(--comment);
     font-size: 15px;
-    line-height: 1.6;
-    user-select: none;
+    line-height: 1.6; /* Deve ser idêntico ao editor */
+    font-family: 'JetBrains Mono', monospace;
     opacity: 0.5;
     background: var(--window-bg);
-    min-width: 50px;
+    user-select: none;
     overflow: hidden;
+    flex-shrink: 0;
+    box-sizing: border-box;
   }
 
-  textarea {
+  /* Wrapper para sobreposição Textarea + Pre */
+  .editor-wrapper {
     flex: 1;
+    position: relative;
+    overflow: hidden; /* Scroll é controlado manualmente ou pelo textarea */
+  }
+
+  /* Estilos compartilhados entre Pre e Textarea para alinhamento perfeito */
+  .code-layer, .input-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    background: transparent;
-    border: none;
-    color: var(--fg-primary);
+    margin: 0;
     padding: 20px;
+    border: none;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 15px;
     line-height: 1.6;
-    resize: none;
-    outline: none;
-    font-family: 'JetBrains Mono', monospace;
-    white-space: pre;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: var(--selection) transparent;
+    tab-size: 2;
+    white-space: pre; /* Garante que não quebre linha sozinho */
+    overflow: auto;
+    box-sizing: border-box;
   }
 
+  /* Camada de Fundo (Highlight) */
+  .code-layer {
+    z-index: 1;
+    color: var(--fg-primary);
+    pointer-events: none; /* Deixa o clique passar para o textarea */
+    background: transparent;
+  }
+
+  /* Camada de Frente (Input) */
+  .input-layer {
+    z-index: 2;
+    color: transparent; /* Texto invisível */
+    background: transparent;
+    caret-color: var(--fg-primary); /* Cursor visível */
+    resize: none;
+    outline: none;
+  }
+  
+  .input-layer::selection {
+    background: rgba(68, 71, 90, 0.5); /* Seleção visível */
+    color: transparent;
+  }
+
+  /* Cores de Sintaxe */
+  .token-comment { color: var(--comment); font-style: italic; }
+  .token-string { color: var(--accent-pink); }
+  .token-bracket { color: var(--accent-orange); font-weight: bold; }
+  
   /* Statusbar */
   .statusbar {
     padding: 8px 20px;
@@ -230,6 +270,7 @@
     justify-content: space-between;
     align-items: center;
     border-top: 1px solid rgba(255,255,255,0.05);
+    z-index: 10;
   }
   .status-left { display: flex; gap: 15px; }
   .status-right { display: flex; gap: 15px; align-items: center; }
@@ -346,13 +387,18 @@
       </div>
     </div>
 
-    <!-- Editor -->
-    <div class="editor-container">
+    <!-- Área Principal -->
+    <div class="main-area">
       <div class="line-numbers" id="lineNumbers">1</div>
-      <textarea id="editor" spellcheck="false" placeholder="// Digite seu código ou texto aqui..."></textarea>
       
-      <div class="drop-overlay" id="dropZone">
-        SOLTE O ARQUIVO AQUI
+      <div class="editor-wrapper">
+        <!-- Camada de Sintaxe (Fundo) -->
+        <pre id="highlightLayer" class="code-layer" aria-hidden="true"></pre>
+        
+        <!-- Camada de Edição (Frente) -->
+        <textarea id="editor" class="input-layer" spellcheck="false" placeholder="# Digite seu código..."></textarea>
+        
+        <div class="drop-overlay" id="dropZone">SOLTE O ARQUIVO AQUI</div>
       </div>
     </div>
 
@@ -391,23 +437,93 @@
   </div>
 </div>
 
-<!-- Script Principal (Funcionalidades Básicas) -->
+<!-- Script Principal -->
 <script>
-  // Elementos Globais
-  const $ = (id) => document.getElementById(id);
-  const editor = $("editor");
-  const lineNumbers = $("lineNumbers");
-  const fileName = $("fileName");
-  const statusMsg = $("statusMsg");
-  const statusDot = $("statusDot");
-  const charCount = $("charCount");
-  const fileInput = $("fileInput");
+  // Elementos
+  const editor = document.getElementById("editor");
+  const highlightLayer = document.getElementById("highlightLayer");
+  const lineNumbers = document.getElementById("lineNumbers");
+  const fileName = document.getElementById("fileName");
+  const statusMsg = document.getElementById("statusMsg");
+  const statusDot = document.getElementById("statusDot");
+  const charCount = document.getElementById("charCount");
+  const fileInput = document.getElementById("fileInput");
 
-  // Funções Auxiliares de UI
-  function updateLines() {
-    const lines = editor.value.split('\n').length;
-    lineNumbers.innerHTML = Array(lines).fill(0).map((_, i) => i + 1).join('<br>');
+  // --- ENGINE DE SYNTAX HIGHLIGHTING ---
+  
+  function escapeHtml(text) {
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
   }
+
+  function applyHighlighting(text) {
+    // 1. Escapar HTML primeiro para evitar injeção
+    let html = escapeHtml(text);
+
+    // 2. Aplicar regras de cores via Regex
+    // Ordem: Comentários (#...) OU Strings ("...") OU Colchetes ([...])
+    // Usamos uma regex combinada para evitar conflitos (ex: # dentro de string não deve ser comentário)
+    
+    html = html.replace(/((#.*)|(".*?")|(\[.*?\]))/g, (match, group1, comment, string, bracket) => {
+      if (comment) {
+        return `<span class="token-comment">${comment}</span>`;
+      } else if (string) {
+        return `<span class="token-string">${string}</span>`;
+      } else if (bracket) {
+        return `<span class="token-bracket">${bracket}</span>`;
+      }
+      return match;
+    });
+    
+    // Adiciona um espaço extra no final se terminar com quebra de linha
+    // para garantir que a linha vazia seja renderizada visualmente
+    if (text.endsWith("\n")) {
+      html += " "; 
+    }
+
+    return html;
+  }
+
+  function updateView() {
+    const text = editor.value;
+    
+    // Atualiza Highlight
+    highlightLayer.innerHTML = applyHighlighting(text);
+    
+    // Atualiza Números de Linha
+    const lines = text.split('\n').length;
+    lineNumbers.innerHTML = Array(lines).fill(0).map((_, i) => i + 1).join('<br>');
+    
+    // Atualiza Stats
+    charCount.textContent = text.length + " chars";
+    updateStatus("Editando...");
+  }
+
+  function syncScroll() {
+    // Sincroniza o scroll da layer de fundo com a textarea
+    highlightLayer.scrollTop = editor.scrollTop;
+    highlightLayer.scrollLeft = editor.scrollLeft;
+    lineNumbers.scrollTop = editor.scrollTop;
+  }
+
+  // Event Listeners
+  editor.addEventListener('input', updateView);
+  editor.addEventListener('scroll', syncScroll);
+  
+  // Suporte a tecla Tab (Opcional, mas útil em editores)
+  editor.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = editor.selectionStart;
+      const end = editor.selectionEnd;
+      // Insere 2 espaços
+      document.execCommand('insertText', false, '  ');
+    }
+  });
+
+  // --- UI UTILS ---
 
   function updateStatus(msg, type = 'normal') {
     statusMsg.textContent = msg;
@@ -415,21 +531,10 @@
     statusMsg.style.color = type === 'busy' ? 'var(--accent-orange)' : 'var(--accent-green)';
   }
 
-  // Eventos de Digitação e Scroll
-  editor.addEventListener('input', () => {
-    updateLines();
-    charCount.textContent = editor.value.length + " chars";
-    updateStatus("Editando...");
-  });
-
-  editor.addEventListener('scroll', () => {
-    lineNumbers.scrollTop = editor.scrollTop;
-  });
-
-  // --- LÓGICA DE ABRIR E SALVAR (Global para funcionar sem falhas) ---
+  // --- FILE HANDLING ---
 
   window.handleOpenClick = function() {
-    fileInput.value = ''; // Reset para permitir reabrir o mesmo arquivo
+    fileInput.value = '';
     fileInput.click();
   };
 
@@ -439,7 +544,7 @@
     try {
       editor.value = await file.text();
       fileName.value = file.name;
-      updateLines();
+      updateView();
       updateStatus("Arquivo carregado");
     } catch(err) {
       alert("Erro ao abrir: " + err);
@@ -450,31 +555,23 @@
     try {
       const content = editor.value;
       const name = fileName.value.trim() || "untitled.txt";
-      
       const blob = new Blob([content], {type: "text/plain;charset=utf-8"});
       const url = URL.createObjectURL(blob);
-      
       const a = document.createElement('a');
       a.href = url;
       a.download = name;
-      
-      // Anexa ao body para compatibilidade (Firefox requer isso)
       document.body.appendChild(a);
       a.click();
-      
-      // Limpeza
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 200);
-      
       updateStatus("Salvo com sucesso!");
     } catch (e) {
-      console.error(e);
       alert("Erro ao salvar: " + e.message);
     }
   };
 
   // Drag & Drop
-  const dropZone = $("dropZone");
+  const dropZone = document.getElementById("dropZone");
   window.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('active'); });
   window.addEventListener('dragleave', (e) => { if(e.target === dropZone) dropZone.classList.remove('active'); });
   window.addEventListener('drop', async (e) => {
@@ -484,50 +581,37 @@
     if(file) {
       editor.value = await file.text();
       fileName.value = file.name;
-      updateLines();
-      updateStatus("Arquivo solto aqui");
+      updateView();
+      updateStatus("Arquivo aberto via drop");
     }
   });
 
-  // Inicialização Visual
-  updateLines();
+  // Init
+  updateView();
 </script>
 
-<!-- Script do Módulo IA (Carregado Separadamente) -->
+<!-- Script IA (Módulo) -->
 <script type="module">
   import { GoogleGenAI } from "@google/genai";
 
-  // Gerenciamento de Chave API
-  const getApiKey = () => {
-    return localStorage.getItem("GEMINI_API_KEY") || "";
-  };
-
+  const getApiKey = () => localStorage.getItem("GEMINI_API_KEY") || "";
   let ai = null;
   const apiKey = getApiKey();
   if (apiKey) {
-    try {
-      ai = new GoogleGenAI({ apiKey: apiKey });
-    } catch (e) {
-      console.error("Erro ao inicializar IA", e);
-    }
+    try { ai = new GoogleGenAI({ apiKey: apiKey }); } catch (e) { console.error(e); }
   }
 
-  // Funções Globais para UI acessar o Módulo
   window.handleAiClick = () => {
     const key = getApiKey();
     if(!key) {
-      const input = prompt("Para usar a IA, insira sua chave da API Google Gemini:");
+      const input = prompt("Chave API Google Gemini necessária:");
       if(input) {
         localStorage.setItem("GEMINI_API_KEY", input);
-        // Tenta reconectar sem recarregar a página se possível
         try {
           ai = new GoogleGenAI({ apiKey: input });
-          alert("Chave salva! IA ativada.");
+          alert("Conectado!");
           document.getElementById('aiModal').classList.add('open');
-        } catch(e) {
-          alert("Erro na chave. Recarregue a página.");
-          location.reload();
-        }
+        } catch(e) { location.reload(); }
       }
       return;
     }
@@ -536,50 +620,38 @@
 
   window.executeAiAction = async (action) => {
     const editor = document.getElementById("editor");
-    if(!editor.value.trim()) return alert("O editor está vazio!");
-    if(!ai) return alert("IA não inicializada. Verifique sua chave API.");
+    if(!editor.value.trim()) return alert("Editor vazio!");
+    if(!ai) return alert("IA não configurada.");
     
-    const loading = document.getElementById("loading");
-    loading.style.display = 'block';
-    updateStatus("IA Processando...", "busy");
+    document.getElementById("loading").style.display = 'block';
     
     const code = editor.value;
     let promptText = "";
-
     switch(action) {
-      case 'fix': promptText = "Fix bugs and improve this code/text. Output ONLY the result:\n\n" + code; break;
-      case 'refactor': promptText = "Refactor this code to be cleaner. Output ONLY the code:\n\n" + code; break;
-      case 'explain': promptText = "Explain briefly what this code/text does in Portuguese:\n\n" + code; break;
-      case 'convert': promptText = "Convert this code to Python. Output ONLY the Python code:\n\n" + code; break;
+      case 'fix': promptText = "Fix bugs/grammar in this code. Return ONLY the fixed code/text:\n\n" + code; break;
+      case 'refactor': promptText = "Refactor this code. Return ONLY the code:\n\n" + code; break;
+      case 'explain': promptText = "Explain this in Portuguese:\n\n" + code; break;
+      case 'convert': promptText = "Convert to Python. Return ONLY code:\n\n" + code; break;
     }
 
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: promptText
-      });
+      const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: promptText });
+      let result = response.text;
       
-      const result = response.text;
-      
-      if(action === 'explain') {
-        editor.value = "/* 🤖 EXPLICAÇÃO:\n" + result.replace(/\*\//g, "* /") + "\n*/\n\n" + code;
+      if(action !== 'explain') {
+        result = result.replace(/^```\w*\n?/, '').replace(/\n?```$/, '');
       } else {
-        // Limpeza básica de blocos markdown
-        let cleanText = result;
-        if (cleanText.startsWith('```')) {
-          cleanText = cleanText.replace(/^```\w*\n?/, '').replace(/\n?```$/, '');
-        }
-        editor.value = cleanText;
+        result = "/* " + result.replace(/\*\//g, "* /") + " */\n\n" + code;
       }
       
-      updateLines();
+      editor.value = result;
+      // Dispara evento input manualmente para atualizar o highlight
+      editor.dispatchEvent(new Event('input'));
       document.getElementById('aiModal').classList.remove('open');
-      updateStatus("Concluído pela IA");
     } catch(err) {
-      alert("Erro na IA: " + err.message);
-      updateStatus("Erro na IA");
+      alert("Erro IA: " + err.message);
     } finally {
-      loading.style.display = 'none';
+      document.getElementById("loading").style.display = 'none';
     }
   };
 </script>
