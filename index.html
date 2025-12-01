@@ -13,18 +13,18 @@
           extend: {
             colors: {
               cw: {
-                bg: '#1e1e2e',      // Deep Navy Background
-                panel: '#282a36',   // Slightly lighter for toolbars
-                paper: '#252538',   // Editor background
-                pink: '#ff79c6',    // Accent 1 (Errors/Keywords)
-                cyan: '#8be9fd',    // Accent 2 (Variables/Funcs)
-                green: '#50fa7b',   // Accent 3 (Success)
-                yellow: '#f1fa8c',  // Accent 4 (Strings/Const)
-                orange: '#ffb86c',  // Accent 5
-                purple: '#bd93f9',  // Accent 6
-                text: '#f8f8f2',    // Main text
-                comment: '#6272a4', // Dimmed text
-                selection: '#44475a',
+                bg: 'var(--cw-bg)',
+                panel: 'var(--cw-panel)',
+                paper: 'var(--cw-paper)',
+                pink: 'var(--cw-pink)',
+                cyan: 'var(--cw-cyan)',
+                green: 'var(--cw-green)',
+                yellow: 'var(--cw-yellow)',
+                orange: 'var(--cw-orange)',
+                purple: 'var(--cw-purple)',
+                text: 'var(--cw-text)',
+                comment: 'var(--cw-comment)',
+                selection: 'var(--cw-selection)',
               }
             },
             fontFamily: {
@@ -42,35 +42,95 @@
     
     <!-- Styles -->
     <style>
-      /* Custom scrollbar to match theme */
-      ::-webkit-scrollbar {
-        width: 10px;
-        height: 10px;
+      :root {
+        /* Modern (Dracula) Theme - Default */
+        --cw-bg: #1e1e2e;
+        --cw-panel: #282a36;
+        --cw-paper: #252538;
+        --cw-pink: #ff79c6;
+        --cw-cyan: #8be9fd;
+        --cw-green: #50fa7b;
+        --cw-yellow: #f1fa8c;
+        --cw-orange: #ffb86c;
+        --cw-purple: #bd93f9;
+        --cw-text: #f8f8f2;
+        --cw-comment: #6272a4;
+        --cw-selection: #44475a;
       }
-      ::-webkit-scrollbar-track {
-        background: #1e1e2e;
+
+      /* Classic Blue Theme (Retro) */
+      [data-theme="classic"] {
+        --cw-bg: #000080;          /* Classic Navy Background */
+        --cw-panel: #c0c0c0;       /* Windows 98 Gray */
+        --cw-paper: #ffffff;       /* White Paper */
+        --cw-pink: #000080;        /* Accent color maps to Navy */
+        --cw-cyan: #008080;        /* Teal */
+        --cw-green: #008000;       /* Green */
+        --cw-yellow: #808000;      /* Olive */
+        --cw-orange: #800000;      /* Maroon */
+        --cw-purple: #800080;      /* Purple */
+        --cw-text: #000000;        /* Black Text */
+        --cw-comment: #808080;     /* Dark Gray */
+        --cw-selection: #000080;   /* Selection Blue */
       }
-      ::-webkit-scrollbar-thumb {
-        background: #6272a4;
-        border-radius: 5px;
+      
+      /* Theme overrides for Classic Mode specifically */
+      [data-theme="classic"] .text-cw-bg { color: white !important; } /* Invert icons on title bar */
+      [data-theme="classic"] .bg-cw-selection { background-color: #000080 !important; color: white !important; }
+      [data-theme="classic"] ::selection { background: #000080; color: white; }
+
+      body { margin: 0; overflow: hidden; background-color: var(--cw-bg); transition: background-color 0.3s; }
+      
+      /* Scrollbar */
+      ::-webkit-scrollbar { width: 16px; height: 16px; }
+      ::-webkit-scrollbar-track { background: var(--cw-panel); }
+      ::-webkit-scrollbar-thumb { 
+        background: var(--cw-panel); 
+        border-top: 2px solid #fff; 
+        border-left: 2px solid #fff; 
+        border-right: 2px solid #000; 
+        border-bottom: 2px solid #000; 
       }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #ff79c6;
+      ::-webkit-scrollbar-thumb:active { 
+        border-top: 2px solid #000; 
+        border-left: 2px solid #000; 
+        border-right: 2px solid #fff; 
+        border-bottom: 2px solid #fff; 
       }
-      /* Editor specific overrides */
-      [contenteditable]:empty:before {
-        content: attr(placeholder);
-        color: #6272a4;
-        font-style: italic;
-      }
-      /* Selection color */
-      ::selection {
-        background: #44475a; 
-        color: #f8f8f2;
-      }
+      
+      [contenteditable]:empty:before { content: attr(placeholder); color: var(--cw-comment); font-style: italic; }
+      ::selection { background: var(--cw-selection); color: #fff; }
+      
+      /* Error overlay */
+      #error-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1e1e2e; color: #ff79c6; z-index: 9999; padding: 2rem; font-family: monospace; overflow: auto; }
+      
+      /* Utility to hide scrollbar but keep functionality */
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 
-    <!-- Import Map for CDNs -->
+    <!-- SETUP PROCESS ENV & ERROR HANDLING -->
+    <script>
+      // 1. Shim process.env for the API Key
+      window.process = {
+        env: {
+          // TODO: Replace with your actual API Key for AI features
+          API_KEY: 'YOUR_API_KEY_HERE' 
+        }
+      };
+
+      // 2. Global Error Handler
+      window.onerror = function(message, source, lineno, colno, error) {
+        const overlay = document.getElementById('error-overlay');
+        if (overlay) {
+          overlay.style.display = 'block';
+          overlay.innerHTML += `<h3 style="color:red">Error Detected:</h3><p>${message}</p><p>Line: ${lineno}</p>`;
+          console.error("Global Error:", message, error);
+        }
+      };
+    </script>
+
+    <!-- Import Map: Cleaned up to avoid conflicts -->
     <script type="importmap">
 {
   "imports": {
@@ -84,54 +144,44 @@
 }
 </script>
 
-    <!-- Babel Standalone for in-browser JSX compilation -->
+    <!-- Babel Standalone -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   </head>
-  <body class="bg-black text-cw-text h-screen overflow-hidden">
-    <div id="root" class="h-full w-full flex items-center justify-center"></div>
+  <body>
+    <!-- Root Element -->
+    <div id="root" class="h-full w-full flex items-center justify-center text-cw-comment bg-gray-900">
+      <div class="animate-pulse text-white font-mono">Loading CodeWord 98...</div>
+    </div>
 
-    <!-- MAIN APPLICATION SCRIPT -->
+    <!-- Error Overlay -->
+    <div id="error-overlay"></div>
+
+    <!-- MAIN APP SCRIPT -->
     <script type="text/babel" data-type="module">
       import React, { useState, useEffect, useRef } from 'react';
       import { createRoot } from 'react-dom/client';
       import { 
-        Minus, Square, X, FileText, Settings, CircleHelp as HelpCircle, 
+        Minus, Square, X, FileText, Settings, CircleHelp, 
         Type, Save, Printer, Bold, Italic, Underline, AlignLeft, 
         AlignCenter, AlignRight, List, ListOrdered, Undo, Redo, 
-        Sparkles, ChevronDown, Palette, Highlighter 
+        Sparkles, ChevronDown, Palette, Highlighter, Check, ChevronRight
       } from 'lucide-react';
       import { GoogleGenAI } from "@google/genai";
 
-      /**
-       * ==========================================
-       * CONFIGURATION FOR GITHUB / STATIC DEPLOY
-       * ==========================================
-       * Since this is a static HTML file, we shim process.env.
-       * 
-       * TODO: Replace 'YOUR_API_KEY_HERE' with your actual Gemini API Key
-       * Get one here: https://aistudio.google.com/
-       */
-      window.process = {
-        env: {
-          API_KEY: 'YOUR_API_KEY_HERE' 
-        }
-      };
-
       // --- CONSTANTS ---
       const INITIAL_CONTENT = `
-        <h1>Welcome to CodeWord 98</h1>
+        <h1 style="font-size: 2em; font-weight: bold; margin-bottom: 0.5em; color: var(--cw-purple);">Welcome to CodeWord 98</h1>
         <p>This is a <b>retro-styled</b> word processor inspired by the aesthetics of modern code editors.</p>
         <p>Type anywhere to start editing. Use the toolbar above to format your text.</p>
         <p><br></p>
-        <p><i>Features include:</i></p>
-        <ul>
+        <p><i style="color: var(--cw-yellow);">Features include:</i></p>
+        <ul style="list-style-type: disc; margin-left: 20px;">
           <li>Rich text editing</li>
-          <li>Syntax-highlighting color palette</li>
           <li><b>AI Assistance</b> powered by Gemini</li>
+          <li>Classic Blue & Modern Themes</li>
         </ul>
       `;
 
-      // --- TYPES ---
       const AiMode = {
         FixGrammar: 'FIX_GRAMMAR',
         Summarize: 'SUMMARIZE',
@@ -139,13 +189,14 @@
         ToneProfessional: 'TONE_PROFESSIONAL'
       };
 
-      // --- SERVICE: GEMINI AI ---
+      // --- AI SERVICE ---
       let genAIInstance = null;
       const getGenAI = () => {
         if (!genAIInstance) {
           const apiKey = window.process?.env?.API_KEY;
           if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
-            console.warn("API Key is missing or default. Please edit the index.html file.");
+            console.warn("API Key is missing or default. AI features will not work.");
+            // We return null but allow app to continue
             return null;
           }
           genAIInstance = new GoogleGenAI({ apiKey });
@@ -162,16 +213,16 @@
         
         switch (mode) {
           case AiMode.FixGrammar:
-            prompt = `Correct the grammar and spelling of the following text, maintaining the original meaning. Return only the corrected text:\n\n${text}`;
+            prompt = `Correct the grammar and spelling. Return only the corrected text:\n\n${text}`;
             break;
           case AiMode.Summarize:
-            prompt = `Summarize the following text in a concise paragraph:\n\n${text}`;
+            prompt = `Summarize this in one paragraph:\n\n${text}`;
             break;
           case AiMode.Expand:
-            prompt = `Expand on the following text, adding more detail and depth while maintaining the style:\n\n${text}`;
+            prompt = `Expand this text with more detail:\n\n${text}`;
             break;
           case AiMode.ToneProfessional:
-            prompt = `Rewrite the following text to sound more professional and corporate:\n\n${text}`;
+            prompt = `Rewrite to sound professional:\n\n${text}`;
             break;
           default:
             prompt = text;
@@ -182,44 +233,142 @@
             model: modelId,
             contents: prompt,
           });
-          return response.text || "No response generated.";
+          return response.text || "No response.";
         } catch (error) {
-          console.error("Gemini API Error:", error);
-          return "Error generating content. Check console/API Key.";
+          console.error("AI Error:", error);
+          return "Error generating content. Check console.";
         }
       };
 
-      // --- COMPONENT: TOOLBAR ---
+      // --- SHARED COMPONENTS ---
+      const WinButton = ({ children, onClick, className = "", red = false }) => (
+        <button 
+          onClick={onClick}
+          className={`
+            flex items-center justify-center w-5 h-5 
+            border-t border-l border-b-black border-r-black 
+            active:border-t-black active:border-l-black active:border-b-cw-comment active:border-r-cw-comment
+            active:bg-cw-selection
+            ${red ? 'bg-cw-pink text-cw-bg' : 'bg-cw-panel border-cw-comment text-cw-comment'}
+            ${className}
+          `}
+        >
+          {children}
+        </button>
+      );
+
+      const ToolBtn = ({ icon: Icon, onClick, active = false, label }) => (
+        <button
+          onClick={onClick}
+          title={label}
+          className={`
+            flex items-center justify-center p-1 min-w-[28px] h-[26px] mx-[1px]
+            border-t border-l border-b-black border-r-black
+            ${active 
+              ? 'bg-cw-selection border-t-black border-l-black border-b-cw-comment border-r-cw-comment text-cw-pink' 
+              : 'bg-cw-panel border-cw-comment hover:bg-cw-selection/50 text-cw-text active:border-t-black active:border-l-black active:border-b-cw-comment active:border-r-cw-comment'
+            }
+          `}
+        >
+          <Icon size={14} />
+        </button>
+      );
+
+      const Divider = () => (
+        <div className="w-[2px] h-[20px] bg-cw-comment/20 mx-1 border-l border-cw-selection/30 border-r border-black/30" />
+      );
+
+      // --- MENU BAR COMPONENT ---
+      const MenuBar = ({ onMenuAction }) => {
+        const [activeMenu, setActiveMenu] = useState(null);
+        
+        const menus = {
+          File: [
+            { label: 'New', action: 'file-new', shortcut: 'Ctrl+N' },
+            { label: 'Open...', action: 'file-open', shortcut: 'Ctrl+O' },
+            { label: 'Save As...', action: 'file-save', shortcut: 'Ctrl+S' },
+            { type: 'separator' },
+            { label: 'Exit', action: 'file-exit' }
+          ],
+          Edit: [
+            { label: 'Undo', action: 'undo', shortcut: 'Ctrl+Z' },
+            { label: 'Redo', action: 'redo', shortcut: 'Ctrl+Y' },
+            { type: 'separator' },
+            { label: 'Select All', action: 'select-all', shortcut: 'Ctrl+A' }
+          ],
+          View: [
+             { label: 'Toggle Word Wrap', action: 'toggle-wrap' },
+             { label: 'Toggle Theme', action: 'toggle-theme' }
+          ],
+          Help: [
+            { label: 'About CodeWord', action: 'help-about' }
+          ]
+        };
+
+        const handleMenuClick = (menuName) => {
+          setActiveMenu(activeMenu === menuName ? null : menuName);
+        };
+
+        const handleItemClick = (action) => {
+          onMenuAction(action);
+          setActiveMenu(null);
+        };
+
+        useEffect(() => {
+          const closeMenu = (e) => {
+            if (!e.target.closest('.menu-container')) {
+              setActiveMenu(null);
+            }
+          };
+          document.addEventListener('click', closeMenu);
+          return () => document.removeEventListener('click', closeMenu);
+        }, []);
+
+        return (
+          <div className="flex px-1 py-1 space-x-1 text-sm text-cw-text border-b border-cw-comment select-none relative z-50 menu-container">
+            {Object.keys(menus).map(menu => (
+              <div key={menu} className="relative">
+                <span 
+                  onClick={() => handleMenuClick(menu)}
+                  className={`px-2 py-0.5 cursor-pointer first-letter:underline hover:bg-cw-selection hover:text-white ${activeMenu === menu ? 'bg-cw-selection text-white' : ''}`}
+                >
+                  {menu}
+                </span>
+                
+                {activeMenu === menu && (
+                  <div className="absolute top-full left-0 min-w-[150px] bg-cw-panel border-2 border-t-cw-comment border-l-cw-comment border-b-black border-r-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] z-50 py-1">
+                    {menus[menu].map((item, idx) => {
+                      if (item.type === 'separator') {
+                        return <div key={idx} className="h-[1px] bg-cw-comment my-1 mx-1" />;
+                      }
+                      return (
+                        <div 
+                          key={idx}
+                          onClick={() => handleItemClick(item.action)}
+                          className="px-4 py-1 hover:bg-cw-selection hover:text-white flex justify-between gap-4 cursor-pointer"
+                        >
+                          <span>{item.label}</span>
+                          {item.shortcut && <span className="opacity-50 text-xs mt-0.5">{item.shortcut}</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      };
+
+      // --- TOOLBAR COMPONENT ---
       const Toolbar = ({ onFormat, onAiAction, isAiLoading }) => {
         const [showAiMenu, setShowAiMenu] = useState(false);
 
-        const ToolBtn = ({ icon: Icon, onClick, active = false, label }) => (
-          <button
-            onClick={onClick}
-            title={label}
-            className={`
-              flex items-center justify-center p-1 min-w-[28px] h-[26px] mx-[1px]
-              border-t border-l border-b-black border-r-black
-              ${active 
-                ? 'bg-cw-selection border-t-black border-l-black border-b-cw-comment border-r-cw-comment' 
-                : 'bg-cw-panel border-cw-comment hover:bg-cw-selection/50 active:border-t-black active:border-l-black active:border-b-cw-comment active:border-r-cw-comment'
-              }
-            `}
-          >
-            <Icon size={14} className={active ? 'text-cw-pink' : 'text-cw-text'} />
-          </button>
-        );
-
-        const Divider = () => (
-          <div className="w-[2px] h-[20px] bg-cw-comment/20 mx-1 border-l border-cw-selection/30 border-r border-black/30" />
-        );
-
         return (
           <div className="flex items-center px-1 py-1 border-b border-cw-comment bg-cw-panel select-none relative z-20">
-            {/* Handle - Drag Strip */}
             <div className="w-1 h-5 border-l border-cw-comment border-r border-black mr-2"></div>
 
-            <div className="flex items-center space-x-0">
+            <div className="flex items-center space-x-0 overflow-x-auto no-scrollbar">
               <ToolBtn icon={Undo} onClick={() => onFormat('undo')} label="Undo" />
               <ToolBtn icon={Redo} onClick={() => onFormat('redo')} label="Redo" />
               <Divider />
@@ -236,7 +385,6 @@
               
               <Divider />
               
-              {/* AI Dropdown */}
               <div className="relative">
                 <button
                   onClick={() => setShowAiMenu(!showAiMenu)}
@@ -289,22 +437,37 @@
         );
       };
 
-      // --- MAIN APP ---
+      // --- MAIN APPLICATION ---
       const App = () => {
         const editorRef = useRef(null);
+        const fileInputRef = useRef(null);
         const [isAiLoading, setIsAiLoading] = useState(false);
         const [wordCount, setWordCount] = useState(0);
         const [charCount, setCharCount] = useState(0);
         const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
         const [isMaximized, setIsMaximized] = useState(false);
+        const [theme, setTheme] = useState('modern');
+        const [wordWrap, setWordWrap] = useState(true);
 
         useEffect(() => {
-          updateStats();
+          if (editorRef.current) {
+            // Only set if empty to avoid overwriting user progress if hot-reloading (though not applicable in build)
+            if (editorRef.current.innerHTML === "") {
+                editorRef.current.innerHTML = INITIAL_CONTENT;
+            }
+            updateStats();
+          }
+        }, []);
+
+        useEffect(() => {
           const timer = setInterval(() => {
             setCurrentTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
           }, 1000);
+          
+          document.body.setAttribute('data-theme', theme);
+          
           return () => clearInterval(timer);
-        }, []);
+        }, [theme]);
 
         const updateStats = () => {
           if (!editorRef.current) return;
@@ -343,28 +506,74 @@
           }
         };
 
-        const toggleMaximize = () => setIsMaximized(!isMaximized);
+        const handleMenuAction = (action) => {
+          switch(action) {
+            case 'file-new':
+              if (confirm("Create new file? Current content will be lost.")) {
+                if (editorRef.current) editorRef.current.innerHTML = "";
+                updateStats();
+              }
+              break;
+            case 'file-open':
+              fileInputRef.current?.click();
+              break;
+            case 'file-save':
+              const blob = new Blob([editorRef.current.innerHTML], {type: "text/html;charset=utf-8"});
+              const a = document.createElement("a");
+              a.href = URL.createObjectURL(blob);
+              a.download = "document.html"; 
+              a.click();
+              setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+              break;
+            case 'file-exit':
+              try { window.close(); } catch(e) { alert("Cannot close window via script."); }
+              break;
+            case 'undo': document.execCommand('undo'); break;
+            case 'redo': document.execCommand('redo'); break;
+            case 'select-all': 
+              setTimeout(() => {
+                editorRef.current?.focus();
+                document.execCommand('selectAll');
+              }, 10);
+              break;
+            case 'toggle-wrap':
+              setWordWrap(!wordWrap);
+              break;
+            case 'toggle-theme':
+              setTheme(prev => prev === 'modern' ? 'classic' : 'modern');
+              break;
+            case 'help-about':
+              alert("CodeWord 98\nA retro-styled editor with AI powers.\nVersion 1.0");
+              break;
+          }
+        };
 
-        const WinButton = ({ children, onClick, className = "", red = false }) => (
-          <button 
-            onClick={onClick}
-            className={`
-              flex items-center justify-center w-5 h-5 
-              border-t border-l border-b-black border-r-black 
-              active:border-t-black active:border-l-black active:border-b-cw-comment active:border-r-cw-comment
-              active:bg-cw-selection
-              ${red ? 'bg-cw-pink text-cw-bg' : 'bg-cw-panel border-cw-comment text-cw-comment'}
-              ${className}
-            `}
-          >
-            {children}
-          </button>
-        );
+        const handleFileChange = (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            if (editorRef.current) {
+              editorRef.current.innerHTML = ev.target.result;
+              updateStats();
+            }
+          };
+          reader.readAsText(file);
+        };
+
+        const toggleMaximize = () => setIsMaximized(!isMaximized);
 
         return (
           <div className={`h-full w-full flex items-center justify-center p-4 bg-cw-bg font-sans transition-all duration-300 ${isMaximized ? 'p-0' : ''}`}>
             
-            {/* Main Window */}
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept=".html,.txt" 
+              onChange={handleFileChange} 
+            />
+
             <div className={`
               flex flex-col bg-cw-panel shadow-[10px_10px_0_0_rgba(0,0,0,0.5)]
               border-2 border-t-cw-comment border-l-cw-comment border-b-black border-r-black
@@ -385,13 +594,7 @@
               </div>
 
               {/* Menu Bar */}
-              <div className="flex px-1 py-1 space-x-4 text-sm text-cw-text border-b border-cw-comment select-none">
-                {['File', 'Edit', 'View', 'Insert', 'Format', 'Tools', 'Table', 'Window', 'Help'].map(menu => (
-                  <span key={menu} className="px-1 cursor-pointer hover:bg-cw-selection hover:text-white first-letter:underline">
-                    {menu}
-                  </span>
-                ))}
-              </div>
+              <MenuBar onMenuAction={handleMenuAction} />
 
               {/* Toolbar */}
               <Toolbar 
@@ -410,19 +613,19 @@
               </div>
 
               {/* Editor Area */}
-              <div className="flex-1 bg-cw-selection/30 overflow-auto p-8 flex justify-center relative cursor-text" onClick={() => editorRef.current?.focus()}>
-                
-                {/* The Page */}
+              <div className="flex-1 bg-cw-selection/30 overflow-auto p-4 sm:p-8 flex justify-center relative cursor-text" onClick={() => editorRef.current?.focus()}>
                 <div 
-                  className="bg-cw-paper w-full max-w-[800px] min-h-[1000px] shadow-2xl relative"
+                  className="bg-cw-paper w-full max-w-[800px] min-h-[800px] sm:min-h-[1000px] shadow-2xl relative transition-colors duration-300"
                   style={{ fontFamily: '"Fira Code", monospace' }}
                 >
-                   {/* Content */}
                    <div 
                     ref={editorRef}
                     contentEditable
-                    className="w-full h-full p-12 outline-none text-cw-text leading-relaxed whitespace-pre-wrap selection:bg-cw-pink selection:text-cw-bg"
-                    dangerouslySetInnerHTML={{ __html: INITIAL_CONTENT }}
+                    className={`
+                      w-full h-full p-8 sm:p-12 outline-none text-cw-text leading-relaxed 
+                      selection:bg-cw-pink selection:text-cw-bg
+                      ${wordWrap ? 'whitespace-pre-wrap' : 'whitespace-pre overflow-x-auto'}
+                    `}
                     onInput={updateStats}
                     spellCheck={false}
                   />
@@ -431,15 +634,15 @@
 
               {/* Status Bar */}
               <div className="h-7 bg-cw-panel border-t border-cw-comment flex items-center justify-between px-3 text-xs text-cw-comment select-none">
-                <div className="flex gap-6">
+                <div className="flex gap-4 sm:gap-6">
                   <span className="flex items-center gap-1">Page 1/1</span>
-                  <span className="flex items-center gap-1 border-l border-cw-selection pl-4">Sec 1</span>
+                  <span className="hidden sm:flex items-center gap-1 border-l border-cw-selection pl-4">Sec 1</span>
                   <span className="flex items-center gap-1 border-l border-cw-selection pl-4">{wordCount} words</span>
-                  <span className="flex items-center gap-1 border-l border-cw-selection pl-4">{charCount} chars</span>
+                  <span className="hidden sm:flex items-center gap-1 border-l border-cw-selection pl-4">{charCount} chars</span>
                 </div>
                 <div className="flex gap-6">
-                  <span className="uppercase">OVR</span>
-                  <span className="uppercase text-cw-text font-bold">INS</span>
+                  <span className="uppercase hidden sm:inline">{theme === 'modern' ? 'MODERN' : 'CLASSIC'}</span>
+                  <span className="uppercase text-cw-text font-bold hidden sm:inline">INS</span>
                   <span>{currentTime}</span>
                 </div>
               </div>
@@ -448,9 +651,15 @@
         );
       };
 
-      // --- MOUNT ---
-      const root = createRoot(document.getElementById('root'));
-      root.render(<App />);
+      try {
+        const rootElement = document.getElementById('root');
+        if (rootElement) {
+          const root = createRoot(rootElement);
+          root.render(<App />);
+        }
+      } catch (err) {
+        console.error("Rendering Error:", err);
+      }
     </script>
   </body>
 </html>
