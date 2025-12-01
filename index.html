@@ -1,437 +1,377 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Editor de texto estilo Retro 80s com tema Dracula e Inteligência Artificial." />
-    <title>NeonCode | Retro 80s Editor</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Babel para compilar React no navegador -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- Fontes Retro -->
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&family=Press+Start+2P&display=swap" rel="stylesheet">
-    
-    <!-- Import Map LIMPO e SEM CONFLITOS -->
-    <script type="importmap">
-    {
-      "imports": {
-        "react": "https://esm.sh/react@18.2.0",
-        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-        "@google/genai": "https://esm.sh/@google/genai@0.1.1",
-        "lucide-react": "https://esm.sh/lucide-react@0.330.0"
-      }
-    }
-    </script>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Retro TXT Editor</title>
+<style>
+  :root {
+    /* Paleta e estilo retrô */
+    --bg: #0a0f0a;            /* fundo quase preto */
+    --phosphor: #4cff4c;      /* verde fosforo */
+    --phosphor-dim: #2ea82e;  /* verde mais escuro */
+    --frame: #132113;         /* moldura */
+    --accent: #1f351f;        /* destaque sutil */
+    --shadow: rgba(0,0,0,0.45);
+  }
 
-    <style>
-      /* Estilos Globais Dracula Theme */
-      body {
-        background-color: #21222c; /* Dracula Darker */
-        margin: 0;
-        font-family: 'Fira Code', monospace;
-        color: #f8f8f2;
-        overflow: hidden; /* Evita scroll na página inteira */
-      }
-      
-      /* Scrollbar Customizada */
-      ::-webkit-scrollbar {
-        width: 14px;
-        height: 14px;
-        background: #282a36;
-      }
-      ::-webkit-scrollbar-corner {
-        background: #282a36;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #6272a4; 
-        border: 3px solid #282a36;
-        border-radius: 8px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #bd93f9;
-      }
+  /* Reset minimalista */
+  * { box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    margin: 0;
+    background: radial-gradient(1200px 600px at 50% 30%, #0d140d 0%, var(--bg) 60%, #060806 100%);
+    color: var(--phosphor);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  }
 
-      /* Animação CRT (Tubo de Raios Catódicos) */
-      @keyframes flicker {
-        0% { opacity: 0.97; }
-        5% { opacity: 0.95; }
-        10% { opacity: 0.9; }
-        15% { opacity: 0.95; }
-        20% { opacity: 0.99; }
-        50% { opacity: 0.95; }
-        55% { opacity: 0.9; }
-        60% { opacity: 0.95; }
-        90% { opacity: 0.98; }
-        100% { opacity: 0.97; }
-      }
+  /* Centro responsivo */
+  .wrap {
+    max-width: 960px;
+    margin: 24px auto;
+    padding: 0 16px;
+  }
 
-      .crt-flicker {
-        animation: flicker 0.15s infinite;
-        pointer-events: none;
-      }
+  /* Janela retrô */
+  .window {
+    background: linear-gradient(#0b120b, #0a100a);
+    border: 2px solid var(--frame);
+    border-radius: 16px;
+    box-shadow:
+      0 12px 30px var(--shadow),
+      inset 0 0 0 1px #0f170f,
+      inset 0 0 22px rgba(76,255,76,0.06);
+    overflow: hidden;
+    position: relative;
+  }
 
-      /* Linhas de Varredura (Scanlines) */
-      .scanlines {
-        background: linear-gradient(
-          to bottom,
-          rgba(255,255,255,0),
-          rgba(255,255,255,0) 50%,
-          rgba(0,0,0,0.2) 50%,
-          rgba(0,0,0,0.2)
-        );
-        background-size: 100% 4px;
-        pointer-events: none;
-        z-index: 40;
-      }
+  /* Barra de título */
+  .titlebar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(180deg, #122012 0%, #0e170e 100%);
+    border-bottom: 2px solid var(--frame);
+    padding: 10px 12px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--phosphor);
+  }
+  .leds {
+    display: flex;
+    gap: 8px;
+    margin-right: 8px;
+  }
+  .led {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(76,255,76,0.6);
+    background: radial-gradient(circle at 30% 30%, var(--phosphor) 0%, var(--phosphor-dim) 60%, #0b0f0b 100%);
+  }
+  .title {
+    flex: 1;
+  }
 
-      /* Classes utilitárias para animação */
-      .animate-spin-slow {
-        animation: spin 3s linear infinite;
-      }
-      @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-      }
-    </style>
-  </head>
-  <body>
-    <div id="root"></div>
+  /* Área de botões e status */
+  .toolbar {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    padding: 10px 12px;
+    border-bottom: 1px dashed #163016;
+  }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .status {
+    text-align: right;
+    color: #8ee98e;
+    font-size: 12px;
+    opacity: 0.9;
+  }
 
-    <!-- Aplicação React Completa -->
-    <script type="text/babel" data-type="module">
-      import React, { useState, useRef, useEffect } from 'react';
-      import ReactDOM from 'react-dom/client';
-      import { Save, FolderOpen, Terminal, Sparkles, Trash2, Info, Github, X } from 'lucide-react';
-      import { GoogleGenAI } from "@google/genai";
+  /* Botões retrô */
+  .btn {
+    appearance: none;
+    border: 1px solid #1b2f1b;
+    background: linear-gradient(180deg, #112111 0%, #0e1b0e 100%);
+    color: var(--phosphor);
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    box-shadow:
+      0 2px 0 #061006,
+      inset 0 0 12px rgba(76,255,76,0.08);
+    transition: transform 0.02s ease, box-shadow 0.12s ease;
+  }
+  .btn:hover {
+    box-shadow:
+      0 2px 0 #061006,
+      inset 0 0 18px rgba(76,255,76,0.14);
+  }
+  .btn:active {
+    transform: translateY(1px);
+  }
 
-      // --- 1. CONFIGURAÇÃO E SERVIÇOS ---
+  /* Input retrô */
+  .input, .file {
+    background: #0b130b;
+    border: 1px solid #1b2f1b;
+    color: var(--phosphor);
+    padding: 8px 10px;
+    border-radius: 8px;
+    box-shadow: inset 0 0 10px rgba(76,255,76,0.06);
+    font-weight: 600;
+  }
+  .file {
+    padding: 6px;
+  }
 
-      // Polyfill seguro para process.env caso não exista
-      if (!window.process) {
-        window.process = { env: { API_KEY: '' } };
-      }
+  /* Editor de texto com efeito CRT */
+  .editor {
+    position: relative;
+    padding: 16px;
+    min-height: 60vh;
+    border-top: 1px dashed #163016;
+  }
+  textarea {
+    width: 100%;
+    height: 55vh;
+    min-height: 300px;
+    resize: vertical;
+    background: #091109;
+    color: var(--phosphor);
+    border: 2px solid #102010;
+    border-radius: 12px;
+    padding: 14px 16px;
+    line-height: 1.6;
+    font-size: 16px;
+    text-shadow: 0 0 2px rgba(76,255,76,0.25);
+    box-shadow:
+      inset 0 0 20px rgba(76,255,76,0.08),
+      inset 0 0 2px #0d190d;
+    outline: none;
+  }
+  textarea:focus {
+    border-color: #1f351f;
+    box-shadow:
+      inset 0 0 26px rgba(76,255,76,0.12),
+      0 0 0 2px rgba(76,255,76,0.08);
+  }
 
-      // Serviço Gemini AI
-      const generateCodeCompletion = async (currentCode, prompt) => {
-        try {
-          const apiKey = window.process.env.API_KEY || '';
-          
-          if (!apiKey) {
-            console.warn("API Key não encontrada em process.env.API_KEY");
-            // Nota: Em produção no GitHub Pages, você não terá a API Key no process.env.
-            // O ideal seria pedir para o usuário inserir a chave se ela não existir.
-          }
-
-          const ai = new GoogleGenAI({ apiKey });
-          const systemInstruction = `You are a helpful coding assistant embedded in a retro 80s text editor. 
-          The user is writing code or text. 
-          Provide a direct completion or improvement based on the user's request.
-          Do not use markdown code blocks in the response unless explicitly asked. Return raw text.`;
-
-          const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: `Context:\n${currentCode}\n\nRequest: ${prompt}`,
-            config: { systemInstruction }
-          });
-
-          return response.text || "";
-        } catch (error) {
-          console.error("Gemini Error:", error);
-          throw error;
-        }
-      };
-
-      // Enum de Status
-      const EditorStatus = {
-        IDLE: 'PRONTO',
-        SAVING: 'SALVANDO...',
-        LOADING: 'CARREGANDO...',
-        AI_THINKING: 'IA PENSANDO...',
-        ERROR: 'ERRO'
-      };
-
-      // --- 2. COMPONENTES ---
-
-      // Botão Retro Reutilizável
-      const RetroButton = ({ children, variant = 'primary', icon, className = '', ...props }) => {
-        const baseStyles = "relative px-3 py-2 sm:px-4 sm:py-2 font-bold uppercase tracking-wider text-[10px] sm:text-xs md:text-sm transition-all duration-100 active:translate-y-1 border-b-4 active:border-b-0 border-r-4 active:border-r-0 flex items-center gap-2 group whitespace-nowrap";
-        
-        const variants = {
-          primary: "bg-[#ff79c6] text-[#282a36] border-[#bd93f9] hover:brightness-110 hover:shadow-[0_0_15px_#ff79c6]",
-          secondary: "bg-[#6272a4] text-white border-[#44475a] hover:brightness-110",
-          danger: "bg-[#ff5555] text-[#282a36] border-[#b93b3b] hover:brightness-110 hover:shadow-[0_0_15px_#ff5555]",
-          success: "bg-[#50fa7b] text-[#282a36] border-[#00c638] hover:brightness-110 hover:shadow-[0_0_15px_#50fa7b]",
-          warning: "bg-[#ffb86c] text-[#282a36] border-[#db8e3b] hover:brightness-110 hover:shadow-[0_0_15px_#ffb86c]",
-          info: "bg-[#8be9fd] text-[#282a36] border-[#00a8cc] hover:brightness-110 hover:shadow-[0_0_15px_#8be9fd]",
-        };
-
-        return (
-          <button className={`${baseStyles} ${variants[variant]} ${className}`} {...props}>
-            {icon && <span className="group-hover:animate-pulse">{icon}</span>}
-            <span>{children}</span>
-          </button>
-        );
-      };
-
-      // Aplicação Principal
-      const App = () => {
-        const [content, setContent] = useState(
-          `// NEON CODE - DRACULA EDITION v1.0\n// Pressione F1 ou clique em 'Sobre' para ajuda.\n\nasync function fetchData() {\n  const [err, res] ?= await fetch("https://api.exemplo.com/dados");\n  \n  if (err) return console.error('erro:', err);\n  return res;\n}`
-        );
-        const [fileName, setFileName] = useState('untitled.txt');
-        const [status, setStatus] = useState(EditorStatus.IDLE);
-        const [aiPrompt, setAiPrompt] = useState('');
-        const [showAiModal, setShowAiModal] = useState(false);
-        const [showAboutModal, setShowAboutModal] = useState(false);
-        
-        const fileInputRef = useRef(null);
-        const textAreaRef = useRef(null);
-
-        // Manipula a tecla TAB
-        const handleKeyDown = (e) => {
-          if (e.key === 'Tab') {
-            e.preventDefault();
-            const start = e.currentTarget.selectionStart;
-            const end = e.currentTarget.selectionEnd;
-            const val = e.currentTarget.value;
-            e.currentTarget.value = val.substring(0, start) + "  " + val.substring(end);
-            e.currentTarget.selectionStart = e.currentTarget.selectionEnd = start + 2;
-            setContent(e.currentTarget.value);
-          }
-        };
-
-        // Abrir Arquivo
-        const handleOpenFile = (event) => {
-          const file = event.target.files?.[0];
-          if (!file) return;
-
-          setStatus(EditorStatus.LOADING);
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const text = e.target?.result;
-            if (typeof text === 'string') {
-              setContent(text);
-              setFileName(file.name);
-              setStatus(EditorStatus.IDLE);
-            }
-          };
-          reader.readAsText(file);
-        };
-
-        // Salvar Arquivo
-        const handleSaveFile = () => {
-          setStatus(EditorStatus.SAVING);
-          const blob = new Blob([content], { type: 'text/plain' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = fileName;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          setTimeout(() => setStatus(EditorStatus.IDLE), 1000);
-        };
-
-        // Ação da IA
-        const handleAiAction = async () => {
-          if (!aiPrompt.trim()) return;
-          setShowAiModal(false);
-          setStatus(EditorStatus.AI_THINKING);
-          try {
-            const newCode = await generateCodeCompletion(content, aiPrompt);
-            setContent(prev => `${prev}\n\n// --- RESPOSTA DA IA ---\n${newCode}`);
-            setStatus(EditorStatus.IDLE);
-            setAiPrompt('');
-          } catch (error) {
-            alert("Erro na IA: API Key não configurada ou inválida. Verifique o console.");
-            console.error(error);
-            setStatus(EditorStatus.ERROR);
-            setTimeout(() => setStatus(EditorStatus.IDLE), 3000);
-          }
-        };
-
-        return (
-          <div className="min-h-screen bg-[#21222c] text-[#f8f8f2] font-mono flex items-center justify-center p-2 sm:p-4 relative overflow-hidden">
-            
-            {/* Efeitos de Fundo */}
-            <div className="fixed inset-0 pointer-events-none z-50 scanlines opacity-20"></div>
-            <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,_#bd93f910_0%,_transparent_70%)]"></div>
-
-            {/* Container Principal */}
-            <div className="w-full max-w-6xl h-[90vh] bg-[#282a36] rounded-lg shadow-[0_0_60px_rgba(0,0,0,0.5)] border border-[#6272a4] flex flex-col overflow-hidden relative z-10 crt-flicker">
-              
-              {/* Barra de Título */}
-              <div className="bg-[#191a21] px-4 py-3 flex items-center justify-between border-b border-[#44475a] shrink-0">
-                <div className="flex gap-2 group">
-                  <div className="w-3 h-3 rounded-full bg-[#ff5555] group-hover:shadow-[0_0_8px_#ff5555] transition-shadow"></div>
-                  <div className="w-3 h-3 rounded-full bg-[#f1fa8c] group-hover:shadow-[0_0_8px_#f1fa8c] transition-shadow"></div>
-                  <div className="w-3 h-3 rounded-full bg-[#50fa7b] group-hover:shadow-[0_0_8px_#50fa7b] transition-shadow"></div>
-                </div>
-                <div className="text-[#ff79c6] text-xs sm:text-sm font-bold tracking-[0.2em] uppercase flex items-center gap-2 drop-shadow-sm truncate mx-4">
-                  <Terminal size={14} className="text-[#8be9fd]" />
-                  <span>{fileName}</span>
-                </div>
-                <RetroButton 
-                  variant="secondary" 
-                  onClick={() => setShowAboutModal(true)} 
-                  className="!px-2 !py-1 text-[10px]"
-                  title="Sobre / Ajuda"
-                >
-                  <Info size={14} />
-                </RetroButton>
-              </div>
-
-              {/* Barra de Ferramentas */}
-              <div className="bg-[#282a36] p-3 sm:p-4 flex flex-wrap gap-2 sm:gap-3 border-b border-[#44475a] items-center shrink-0 shadow-lg z-20">
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  onChange={handleOpenFile} 
-                  className="hidden" 
-                />
-                
-                <RetroButton onClick={() => fileInputRef.current?.click()} icon={<FolderOpen size={16} />} variant="warning">
-                  Abrir
-                </RetroButton>
-                
-                <RetroButton onClick={handleSaveFile} icon={<Save size={16} />} variant="success">
-                  Salvar
-                </RetroButton>
-                
-                <RetroButton onClick={() => setContent('')} icon={<Trash2 size={16} />} variant="danger">
-                  Limpar
-                </RetroButton>
-
-                <div className="flex-grow hidden sm:block"></div>
-
-                <RetroButton onClick={() => setShowAiModal(true)} icon={<Sparkles size={16} />} variant="primary" className="ml-auto sm:ml-0">
-                  IA Helper
-                </RetroButton>
-              </div>
-
-              {/* Área do Editor */}
-              <div className="relative flex-grow flex flex-col bg-[#282a36]">
-                <textarea
-                  ref={textAreaRef}
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="w-full h-full p-4 sm:p-6 bg-[#282a36] text-[#f8f8f2] resize-none outline-none text-xs sm:text-sm md:text-base leading-relaxed font-['Fira_Code'] selection:bg-[#44475a] selection:text-[#50fa7b]"
-                  spellCheck={false}
-                />
-                
-                {/* Barra de Status */}
-                <div className="bg-[#191a21] text-[#6272a4] text-[10px] sm:text-xs px-4 py-2 flex justify-between items-center border-t border-[#44475a] shrink-0 font-bold tracking-wider">
-                  <div className="flex gap-4">
-                    <span>L: {content.split('\n').length}</span>
-                    <span>C: {content.length}</span>
-                    <span className="hidden sm:inline">UTF-8</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${status === EditorStatus.ERROR ? 'bg-[#ff5555] animate-ping' : status === EditorStatus.IDLE ? 'bg-[#50fa7b]' : 'bg-[#f1fa8c] animate-pulse'}`}></span>
-                    <span className={`${status === EditorStatus.ERROR ? 'text-[#ff5555]' : 'text-[#f8f8f2]'}`}>
-                      {status}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Modal IA */}
-            {showAiModal && (
-              <div className="absolute inset-0 z-[60] flex items-center justify-center bg-[#282a36]/90 backdrop-blur-sm p-4">
-                <div className="bg-[#282a36] border-2 border-[#bd93f9] p-6 rounded-lg w-full max-w-lg shadow-[0_0_50px_rgba(189,147,249,0.3)] animate-[flicker_0.2s_ease-in-out]">
-                  <h3 className="text-[#bd93f9] text-xl font-bold mb-4 flex items-center gap-2 font-['Press_Start_2P'] tracking-tighter">
-                    <Sparkles className="animate-spin-slow text-[#ff79c6]" />
-                    NEON AI
-                  </h3>
-                  <p className="text-[#f8f8f2] mb-4 text-sm font-bold">O que você deseja codar hoje?</p>
-                  <textarea
-                    className="w-full bg-[#191a21] border-2 border-[#44475a] text-[#50fa7b] p-3 rounded mb-4 outline-none focus:border-[#ff79c6] focus:shadow-[0_0_10px_#ff79c6] transition-all"
-                    rows={4}
-                    placeholder="Ex: Crie uma função em Python para listar arquivos..."
-                    value={aiPrompt}
-                    onChange={(e) => setAiPrompt(e.target.value)}
-                    autoFocus
-                  />
-                  <div className="flex justify-end gap-3">
-                    <button 
-                      onClick={() => setShowAiModal(false)}
-                      className="px-4 py-2 text-[#6272a4] hover:text-[#f8f8f2] transition-colors font-bold uppercase text-xs"
-                    >
-                      Cancelar
-                    </button>
-                    <RetroButton onClick={handleAiAction} variant="primary">
-                      Executar
-                    </RetroButton>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Modal Sobre */}
-            {showAboutModal && (
-              <div className="absolute inset-0 z-[60] flex items-center justify-center bg-[#282a36]/95 backdrop-blur-md p-4">
-                <div className="bg-[#282a36] border-2 border-[#50fa7b] p-6 rounded-lg w-full max-w-xl shadow-[0_0_50px_rgba(80,250,123,0.3)] relative">
-                  <button 
-                    onClick={() => setShowAboutModal(false)}
-                    className="absolute top-4 right-4 text-[#6272a4] hover:text-[#ff5555]"
-                  >
-                    <X size={24} />
-                  </button>
-                  
-                  <h3 className="text-[#50fa7b] text-xl font-bold mb-6 flex items-center gap-2 font-['Press_Start_2P']">
-                    <Terminal />
-                    SOBRE
-                  </h3>
-                  
-                  <div className="space-y-4 text-sm text-[#f8f8f2] leading-relaxed">
-                    <p>
-                      <strong className="text-[#ff79c6]">NEON CODE</strong> é um editor de texto inspirado na estética Synthwave e no tema Dracula.
-                    </p>
-                    
-                    <div className="bg-[#191a21] p-4 rounded border border-[#44475a]">
-                      <h4 className="text-[#8be9fd] font-bold mb-2">Funcionalidades:</h4>
-                      <ul className="list-disc list-inside space-y-1 text-[#bd93f9]">
-                        <li>Edição de texto simples</li>
-                        <li>Integração com <span className="text-[#ffb86c]">Gemini AI</span></li>
-                        <li>Salvar/Carregar arquivos</li>
-                        <li>Estética retrô imersiva</li>
-                      </ul>
-                    </div>
-
-                    <div className="pt-4 border-t border-[#44475a] flex items-center justify-between">
-                      <span className="text-[#6272a4] text-xs">v1.0.0</span>
-                      <a href="https://github.com" target="_blank" className="flex items-center gap-2 text-[#f8f8f2] hover:text-[#50fa7b] transition-colors">
-                        <Github size={16} />
-                        <span className="text-xs font-bold uppercase">Github</span>
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-[#6272a4] text-[10px] opacity-40 select-none font-['Press_Start_2P'] whitespace-nowrap">
-              INSERT COIN TO START
-            </div>
-
-          </div>
-        );
-      };
-
-      // Montagem do React
-      const root = ReactDOM.createRoot(document.getElementById('root'));
-      root.render(
-        <React.StrictMode>
-          <App />
-        </React.StrictMode>
+  /* Scanlines + glow */
+  .crt-overlay::before,
+  .crt-overlay::after {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    border-radius: 12px;
+  }
+  .crt-overlay::before {
+    background-image:
+      linear-gradient(rgba(0,0,0,0.15), rgba(0,0,0,0.15)),
+      repeating-linear-gradient(
+        to bottom,
+        rgba(76,255,76,0.08) 0px,
+        rgba(76,255,76,0.08) 1px,
+        transparent 2px,
+        transparent 3px
       );
-    </script>
-  </body>
+    mix-blend-mode: multiply;
+  }
+  .crt-overlay::after {
+    box-shadow: inset 0 0 80px rgba(76,255,76,0.08);
+  }
+
+  /* Rodapé */
+  .footer {
+    padding: 10px 12px 14px;
+    border-top: 1px dashed #163016;
+    font-size: 12px;
+    color: #8ee98e;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .tip {
+    opacity: 0.85;
+  }
+
+  /* Arrastar e soltar */
+  .drop {
+    border: 2px dashed #1b2f1b;
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+    color: #8ee98e;
+    transition: background 0.12s ease, border-color 0.12s ease;
+  }
+  .drop.active {
+    background: rgba(76,255,76,0.06);
+    border-color: var(--phosphor);
+    color: var(--phosphor);
+  }
+
+  /* Responsivo */
+  @media (max-width: 640px) {
+    .toolbar { grid-template-columns: 1fr; }
+    textarea { height: 50vh; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="window">
+      <div class="titlebar">
+        <div class="leds"><span class="led"></span><span class="led"></span><span class="led"></span></div>
+        <div class="title">RETRO TXT EDITOR</div>
+        <button class="btn" id="newBtn" title="Novo arquivo">Novo</button>
+      </div>
+
+      <div class="toolbar">
+        <div class="controls">
+          <input type="file" class="file" id="fileInput" accept=".txt,text/plain" />
+          <input type="text" class="input" id="filename" placeholder="nome-do-arquivo.txt" />
+          <button class="btn" id="openBtn">Abrir</button>
+          <button class="btn" id="saveBtn">Salvar</button>
+          <button class="btn" id="downloadBtn">Baixar .txt</button>
+        </div>
+        <div class="status" id="status">Pronto</div>
+      </div>
+
+      <div class="editor">
+        <div class="drop" id="dropZone">Arraste e solte um arquivo .txt aqui</div>
+        <div class="crt-overlay">
+          <textarea id="text" spellcheck="false" placeholder="Digite seu texto retrô aqui..."></textarea>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="tip">Dica: use “Salvar” para armazenamento local e “Baixar .txt” para salvar no seu computador.</div>
+        <div>v1.0 • Retro Mode</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // Utilidades
+  const $ = (sel) => document.querySelector(sel);
+  const statusEl = $("#status");
+  const textEl = $("#text");
+  const fileInput = $("#fileInput");
+  const filenameEl = $("#filename");
+
+  const setStatus = (msg) => { statusEl.textContent = msg; };
+  const defaultName = () => filenameEl.value.trim() || "arquivo.txt";
+
+  // Persistência local (localStorage)
+  const STORAGE_KEY = "retro-txt-editor";
+  const saveLocal = () => {
+    const payload = {
+      filename: defaultName(),
+      content: textEl.value,
+      ts: Date.now()
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    setStatus("Salvo localmente");
+  };
+  const loadLocal = () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      filenameEl.value = data.filename || "arquivo.txt";
+      textEl.value = data.content || "";
+      setStatus("Carregado do armazenamento local");
+    } catch {
+      // ignora erro
+    }
+  };
+
+  // Novo arquivo
+  $("#newBtn").addEventListener("click", () => {
+    textEl.value = "";
+    filenameEl.value = "novo-arquivo.txt";
+    setStatus("Novo arquivo");
+  });
+
+  // Abrir via input
+  $("#openBtn").addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", async () => {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+    if (file.type && file.type !== "text/plain") {
+      setStatus("Formato não suportado (use .txt)");
+      return;
+    }
+    const text = await file.text();
+    textEl.value = text;
+    filenameEl.value = file.name || "arquivo.txt";
+    setStatus(`Aberto: ${file.name || "arquivo.txt"}`);
+  });
+
+  // Arrastar e soltar
+  const dropZone = $("#dropZone");
+  ["dragenter","dragover"].forEach(evt =>
+    dropZone.addEventListener(evt, (e) => {
+      e.preventDefault(); e.stopPropagation();
+      dropZone.classList.add("active");
+      setStatus("Solte para abrir");
+    })
+  );
+  ["dragleave","drop"].forEach(evt =>
+    dropZone.addEventListener(evt, (e) => {
+      e.preventDefault(); e.stopPropagation();
+      dropZone.classList.remove("active");
+    })
+  );
+  dropZone.addEventListener("drop", async (e) => {
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    if (file.type && file.type !== "text/plain") {
+      setStatus("Formato não suportado (use .txt)");
+      return;
+    }
+    const text = await file.text();
+    textEl.value = text;
+    filenameEl.value = file.name || "arquivo.txt";
+    setStatus(`Aberto: ${file.name || "arquivo.txt"}`);
+  });
+
+  // Salvar no armazenamento local (não baixa arquivo)
+  $("#saveBtn").addEventListener("click", saveLocal);
+
+  // Baixar como .txt (download)
+  $("#downloadBtn").addEventListener("click", () => {
+    const blob = new Blob([textEl.value], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = defaultName();
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    setStatus(`Baixado: ${defaultName()}`);
+  });
+
+  // Auto-save leve
+  let debounce;
+  textEl.addEventListener("input", () => {
+    setStatus("Editando...");
+    clearTimeout(debounce);
+    debounce = setTimeout(saveLocal, 600);
+  });
+
+  // Carregamento inicial
+  window.addEventListener("DOMContentLoaded", loadLocal);
+</script>
+</body>
 </html>
