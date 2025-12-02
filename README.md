@@ -45,22 +45,6 @@ O projeto foi construído para ser leve, nostálgico e funcional, utilizando tec
 
 ---
 
-### 🚀 Como Usar
-
-#### 1. Instalação / Deploy
-Como o projeto é um arquivo único, não há necessidade de `npm install` ou build.
-*   **GitHub Pages:** Basta subir o `index.html` para seu repositório e ativar o Pages.
-*   **Local:** Dê dois cliques no `index.html`.
-
-#### 2. Configurando a IA (Gemini)
-Para usar o botão **"AI ✨"**, você precisará de uma chave de API gratuita.
-
-1. Acesse o [Google AI Studio](https://aistudio.google.com/app/apikey).
-2. Gere sua **API Key**.
-3. No RetroGen Editor, clique no botão **AI ✨**.
-4. Cole sua chave quando solicitado. Ela ficará salva no seu navegador (Local Storage).
-
----
 
 ### 📦 Estrutura do Projeto
 
