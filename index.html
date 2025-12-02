@@ -1,95 +1,701 @@
-<div align="center">
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Code Editor - Dark Theme</title>
+<!-- Import Map para carregar a biblioteca Gemini -->
+<script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@0.1.0",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/"
+  }
+}
+</script>
+<!-- Fonte JetBrains Mono -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 
-<a href="https://github.com/facoriolano">
-<img src="https://readme-typing-svg.herokuapp.com?font=Press+Start+2P&weight=400&size=50&duration=4000&pause=1000&color=BD93F9&background=00000000&center=true&vCenter=true&width=1000&height=100&lines=RETRO+GEN+EDITOR" alt="Typing SVG" />
-</a>
+<style>
+  :root {
+    /* Paleta Dracula Oficial */
+    --bg-app: #eef1f5;
+    --window-bg: #282a36;     
+    --fg-primary: #f8f8f2;    
+    
+    /* Cores de Sintaxe e UI */
+    --accent-pink: #ff79c6;
+    --accent-cyan: #8be9fd;
+    --accent-green: #50fa7b;
+    --accent-orange: #ffb86c;
+    --accent-purple: #bd93f9;
+    --accent-yellow: #f1fa8c;
+    --comment: #6272a4;
+    
+    /* UI */
+    --selection: #44475a;
+    --current-line: #44475a;
+  }
 
-<div style="display: flex; justify-content: center; gap: 10px;">
-<a href="https://developer.mozilla.org/en-US/docs/Web/HTML">
-  <img src="https://img.shields.io/badge/Core-Single_HTML-E0218A?style=for-the-badge&logo=html5&logoColor=white" height="28" />
-</a>
-<a href="https://ai.google.dev/">
-  <img src="https://img.shields.io/badge/AI-Google_Gemini-8BE9FD?style=for-the-badge&logo=google&logoColor=black" height="28" />
-</a>
-<a href="https://github.com/facoriolano">
-  <img src="https://img.shields.io/badge/Style-Dracula_Retro-BD93F9?style=for-the-badge&logo=css3&logoColor=white" height="28" />
-</a>
-<a href="https://instagram.com/facoriolano">
-  <img src="https://img.shields.io/badge/Instagram-%40facoriolano-FF79C6?style=for-the-badge&logo=instagram&logoColor=white" height="28" />
-</a>
+  /* Reset */
+  * { box-sizing: border-box; }
+  
+  html, body {
+    height: 100%;
+    margin: 0;
+    font-family: 'JetBrains Mono', monospace;
+    background: radial-gradient(circle at center, #d0d6e2 0%, #bdc3c7 100%);
+    color: var(--fg-primary);
+    overflow: hidden;
+  }
+
+  /* Container Principal */
+  .wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* Janela do Editor */
+  .window {
+    background: var(--window-bg);
+    border-radius: 12px;
+    box-shadow: 
+      0 20px 60px rgba(0,0,0,0.55),
+      0 0 0 1px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 85vh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Barra de Título */
+  .titlebar {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--window-bg);
+    user-select: none;
+    z-index: 10;
+  }
+
+  .window-controls {
+    display: flex;
+    gap: 8px;
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot.red { background: #ff5f56; }
+  .dot.yellow { background: #ffbd2e; }
+  .dot.green { background: #27c93f; }
+
+  /* Barra de Ferramentas */
+  .toolbar {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+  }
+
+  .btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    color: var(--comment);
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid transparent;
+  }
+  
+  .btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--fg-primary);
+    border-color: rgba(255,255,255,0.1);
+  }
+
+  .btn:active {
+    transform: scale(0.96);
+  }
+  
+  .btn-primary {
+    background: var(--accent-pink);
+    color: #282a36;
+  }
+  .btn-primary:hover {
+    background: #ff91cf;
+    color: #282a36;
+    box-shadow: 0 0 15px rgba(255, 121, 198, 0.4);
+  }
+
+  .btn-ai {
+    background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
+    color: #282a36;
+    font-weight: bold;
+  }
+  .btn-ai:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 0 15px rgba(139, 233, 253, 0.4);
+  }
+
+  /* Input Nome do Arquivo */
+  .filename-display {
+    color: var(--fg-primary);
+    font-size: 13px;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid transparent;
+    border-radius: 4px;
+    text-align: center;
+    width: 200px;
+    padding: 4px;
+    font-family: inherit;
+    outline: none;
+    transition: 0.2s;
+  }
+  .filename-display:focus {
+    border-color: var(--comment);
+    background: rgba(0,0,0,0.4);
+  }
+  /* Importante: visibility hidden mas presente no DOM */
+  .file-input { 
+    position: absolute;
+    width: 1px; 
+    height: 1px; 
+    padding: 0; 
+    margin: -1px; 
+    overflow: hidden; 
+    clip: rect(0,0,0,0); 
+    border: 0; 
+  }
+
+  /* Área Principal do Editor (Wrapper) */
+  .main-area {
+    display: flex;
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: var(--window-bg);
+  }
+
+  /* Números de Linha */
+  .line-numbers {
+    width: 50px;
+    padding: 20px 5px 20px 0;
+    text-align: right;
+    color: var(--comment);
+    font-size: 15px;
+    line-height: 1.6; /* Deve ser idêntico ao editor */
+    font-family: 'JetBrains Mono', monospace;
+    opacity: 0.5;
+    background: var(--window-bg);
+    user-select: none;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-sizing: border-box;
+  }
+
+  /* Wrapper para sobreposição Textarea + Pre */
+  .editor-wrapper {
+    flex: 1;
+    position: relative;
+    overflow: hidden; /* Scroll é controlado manualmente ou pelo textarea */
+  }
+
+  /* Estilos compartilhados entre Pre e Textarea para alinhamento perfeito */
+  .code-layer, .input-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 20px;
+    border: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    line-height: 1.6;
+    tab-size: 2;
+    white-space: pre; /* Garante que não quebre linha sozinho */
+    overflow: auto;
+    box-sizing: border-box;
+  }
+
+  /* Camada de Fundo (Highlight) */
+  .code-layer {
+    z-index: 1;
+    color: var(--fg-primary);
+    pointer-events: none; /* Deixa o clique passar para o textarea */
+    background: transparent;
+  }
+
+  /* Camada de Frente (Input) */
+  .input-layer {
+    z-index: 2;
+    color: transparent; /* Texto invisível */
+    background: transparent;
+    caret-color: var(--fg-primary); /* Cursor visível */
+    resize: none;
+    outline: none;
+  }
+  
+  .input-layer::selection {
+    background: rgba(68, 71, 90, 0.5); /* Seleção visível */
+    color: transparent;
+  }
+
+  /* Cores de Sintaxe */
+  .token-comment { color: var(--comment); font-style: italic; }
+  .token-string { color: var(--accent-pink); }
+  .token-bracket { color: var(--accent-orange); font-weight: bold; }
+  
+  /* Statusbar */
+  .statusbar {
+    padding: 8px 20px;
+    font-size: 12px;
+    color: var(--comment);
+    background: #21222c;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    z-index: 10;
+  }
+  .status-left { display: flex; gap: 15px; }
+  .status-right { display: flex; gap: 15px; align-items: center; }
+
+  .dot-status { width: 8px; height: 8px; background: var(--comment); border-radius: 50%; display: inline-block; margin-right: 6px; }
+  .dot-status.active { background: var(--accent-green); box-shadow: 0 0 6px var(--accent-green); }
+  .dot-status.busy { background: var(--accent-orange); animation: pulse 0.8s infinite; }
+  .dot-status.linked { background: var(--accent-cyan); box-shadow: 0 0 6px var(--accent-cyan); }
+
+  @keyframes pulse { 50% { opacity: 0.5; } }
+
+  /* Modal e Overlays */
+  .drop-overlay {
+    position: absolute;
+    inset: 10px;
+    border: 2px dashed var(--accent-cyan);
+    border-radius: 8px;
+    background: rgba(40, 42, 54, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-cyan);
+    font-weight: bold;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 50;
+  }
+  .drop-overlay.active { opacity: 1; pointer-events: all; }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(2px);
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--window-bg);
+    padding: 30px;
+    border-radius: 12px;
+    border: 1px solid var(--comment);
+    width: 450px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+  }
+  
+  .modal h2 {
+    color: var(--accent-pink);
+    margin-top: 0;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .modal-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--comment);
+    color: var(--fg-primary);
+    padding: 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+    font-family: inherit;
+    font-size: 13px;
+    text-align: center;
+  }
+  .modal-btn:hover {
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+    background: rgba(139, 233, 253, 0.1);
+  }
+
+  @media (max-width: 600px) {
+    .wrap { padding: 0; max-width: 100%; }
+    .window { height: 100vh; border-radius: 0; }
+    .titlebar { flex-wrap: wrap; }
+    .toolbar { width: 100%; justify-content: space-between; margin-top: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="window">
+    <!-- Titlebar -->
+    <div class="titlebar">
+      <div class="window-controls">
+        <div class="dot red"></div>
+        <div class="dot yellow"></div>
+        <div class="dot green"></div>
+      </div>
+      <input type="text" id="fileName" class="filename-display" value="untitled.txt" spellcheck="false" placeholder="Nome do arquivo...">
+      
+      <div class="toolbar">
+        <input type="file" id="fileInput" class="file-input">
+        <button class="btn" id="btnOpen" onclick="handleOpenClick()">Abrir</button>
+        <button class="btn btn-primary" id="btnSave" onclick="handleSaveClick()">Salvar</button>
+        <button class="btn btn-ai" id="btnAi" onclick="handleAiClick()">AI ✨</button>
+      </div>
+    </div>
+
+    <!-- Área Principal -->
+    <div class="main-area">
+      <div class="line-numbers" id="lineNumbers">1</div>
+      
+      <div class="editor-wrapper">
+        <!-- Camada de Sintaxe (Fundo) -->
+        <pre id="highlightLayer" class="code-layer" aria-hidden="true"></pre>
+        
+        <!-- Camada de Edição (Frente) -->
+        <textarea id="editor" class="input-layer" spellcheck="false" placeholder="# Digite seu código..."></textarea>
+        
+        <div class="drop-overlay" id="dropZone">SOLTE O ARQUIVO AQUI</div>
+      </div>
+    </div>
+
+    <!-- Statusbar -->
+    <div class="statusbar">
+      <div class="status-left">
+        <span id="charCount">0 chars</span>
+      </div>
+      <div class="status-right">
+        <div class="dot-status active" id="statusDot"></div>
+        <span id="statusMsg" style="color: var(--accent-green)">Ready</span>
+      </div>
+    </div>
+  </div>
 </div>
 
+<!-- Modal IA -->
+<div class="modal-overlay" id="aiModal">
+  <div class="modal">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h2><span>✨</span> AI Assistant</h2>
+      <button onclick="document.getElementById('aiModal').classList.remove('open')" style="background:none; border:none; color:var(--comment); cursor:pointer; font-size:24px;">&times;</button>
+    </div>
+    <p style="color: var(--comment); font-size: 14px; margin-bottom: 20px;">Use o Gemini 2.5 para melhorar seu código.</p>
+    
+    <div class="modal-grid">
+      <button class="modal-btn" onclick="executeAiAction('fix')">Corrigir Bugs</button>
+      <button class="modal-btn" onclick="executeAiAction('refactor')">Refatorar</button>
+      <button class="modal-btn" onclick="executeAiAction('explain')">Explicar</button>
+      <button class="modal-btn" onclick="executeAiAction('convert')">Para Python</button>
+    </div>
+    
+    <div id="loading" style="display:none; margin-top:20px; text-align:center; color:var(--accent-cyan); font-size:13px;">
+      ⚡ Processando com Gemini...
+    </div>
+  </div>
 </div>
 
-<br />
+<!-- Script Principal -->
+<script>
+  // Elementos
+  const editor = document.getElementById("editor");
+  const highlightLayer = document.getElementById("highlightLayer");
+  const lineNumbers = document.getElementById("lineNumbers");
+  const fileName = document.getElementById("fileName");
+  const statusMsg = document.getElementById("statusMsg");
+  const statusDot = document.getElementById("statusDot");
+  const charCount = document.getElementById("charCount");
+  const fileInput = document.getElementById("fileInput");
 
-# 💾 RetroGen Editor
+  // Variavel para armazenar referência do arquivo no disco (File System Access API)
+  let fileHandle = null;
 
-Um editor de código **Single-File** (Arquivo Único) com estética **Cyberpunk/Dracula**, rodando diretamente no navegador com Inteligência Artificial integrada.
+  // --- ENGINE DE SYNTAX HIGHLIGHTING ---
+  
+  function escapeHtml(text) {
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
 
-O projeto foi construído para ser leve, nostálgico e funcional, utilizando tecnologias modernas como a **File System Access API** para salvar arquivos diretamente no disco e a **Gemini API** para auxiliar na codificação.
+  function applyHighlighting(text) {
+    let html = escapeHtml(text);
+    html = html.replace(/((#.*)|(".*?")|(\[.*?\]))/g, (match, group1, comment, string, bracket) => {
+      if (comment) {
+        return `<span class="token-comment">${comment}</span>`;
+      } else if (string) {
+        return `<span class="token-string">${string}</span>`;
+      } else if (bracket) {
+        return `<span class="token-bracket">${bracket}</span>`;
+      }
+      return match;
+    });
+    
+    if (text.endsWith("\n")) {
+      html += " "; 
+    }
 
----
+    return html;
+  }
 
-### ✨ Funcionalidades
+  function updateView() {
+    const text = editor.value;
+    highlightLayer.innerHTML = applyHighlighting(text);
+    const lines = text.split('\n').length;
+    lineNumbers.innerHTML = Array(lines).fill(0).map((_, i) => i + 1).join('<br>');
+    charCount.textContent = text.length + " chars";
+    
+    // Se tiver fileHandle, status é diferente
+    if (fileHandle) {
+      updateStatus("Editando (Vinculado)", 'linked');
+    } else {
+      updateStatus("Editando...");
+    }
+  }
 
-*   **⚡ Single File:** Todo o aplicativo funciona através de apenas um arquivo `index.html`. Basta abrir e usar.
-*   **🎨 Estética Retrô:** Tema inspirado no Drácula Theme, com cores neon (Pink/Cyan) e fontes monoespaçadas (JetBrains Mono).
-*   **🧠 AI Powered:** Integração com Google Gemini 2.5 Flash para:
-    *   Corrigir Bugs
-    *   Refatorar Código
-    *   Converter Linguagens
-    *   Explicar trechos complexos
-*   **🌈 Syntax Highlighting:** Realce de sintaxe em tempo real para comentários, strings e colchetes.
-*   **💾 Native Save:** Suporte a salvamento direto no arquivo original (Sobrescrever) em navegadores compatíveis (Chrome/Edge).
+  function syncScroll() {
+    highlightLayer.scrollTop = editor.scrollTop;
+    highlightLayer.scrollLeft = editor.scrollLeft;
+    lineNumbers.scrollTop = editor.scrollTop;
+  }
 
----
+  editor.addEventListener('input', updateView);
+  editor.addEventListener('scroll', syncScroll);
+  editor.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      document.execCommand('insertText', false, '  ');
+    }
+  });
 
-### 🚀 Como Usar
+  // --- UI UTILS ---
 
-#### 1. Instalação / Deploy
-Como o projeto é um arquivo único, não há necessidade de `npm install` ou build.
-*   **GitHub Pages:** Basta subir o `index.html` para seu repositório e ativar o Pages.
-*   **Local:** Dê dois cliques no `index.html`.
+  function updateStatus(msg, type = 'normal') {
+    statusMsg.textContent = msg;
+    if (type === 'linked') {
+      statusDot.className = 'dot-status linked';
+      statusMsg.style.color = 'var(--accent-cyan)';
+    } else if (type === 'busy') {
+      statusDot.className = 'dot-status busy';
+      statusMsg.style.color = 'var(--accent-orange)';
+    } else {
+      statusDot.className = 'dot-status active';
+      statusMsg.style.color = 'var(--accent-green)';
+    }
+  }
 
-#### 2. Configurando a IA (Gemini)
-Para usar o botão **"AI ✨"**, você precisará de uma chave de API gratuita.
+  // --- FILE HANDLING (Moderno vs Fallback) ---
 
-1. Acesse o [Google AI Studio](https://aistudio.google.com/app/apikey).
-2. Gere sua **API Key**.
-3. No RetroGen Editor, clique no botão **AI ✨**.
-4. Cole sua chave quando solicitado. Ela ficará salva no seu navegador (Local Storage).
+  window.handleOpenClick = async function() {
+    // Tenta usar File System Access API (Chrome, Edge, Opera)
+    if ('showOpenFilePicker' in window) {
+      try {
+        const [handle] = await window.showOpenFilePicker({
+          types: [{
+            description: 'Text Files',
+            accept: { 'text/plain': ['.txt', '.md', '.js', '.html', '.css'] }
+          }],
+        });
+        
+        // Guarda referencia
+        fileHandle = handle;
+        
+        const file = await fileHandle.getFile();
+        editor.value = await file.text();
+        fileName.value = file.name;
+        
+        updateView();
+        updateStatus("Arquivo vinculado", 'linked');
+      } catch (err) {
+        // Usuário cancelou ou erro, não faz nada
+        if(err.name !== 'AbortError') console.error(err);
+      }
+    } else {
+      // Fallback para navegadores antigos (Firefox, Safari)
+      fileInput.value = '';
+      fileInput.click();
+    }
+  };
 
----
+  // Fallback Input Change
+  fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    try {
+      fileHandle = null; // Reset handle pois input não dá permissão de escrita
+      editor.value = await file.text();
+      fileName.value = file.name;
+      updateView();
+      updateStatus("Arquivo aberto (modo leitura)");
+    } catch(err) {
+      alert("Erro ao abrir: " + err);
+    }
+  });
 
-### 📦 Estrutura do Projeto
+  window.handleSaveClick = async function() {
+    try {
+      const content = editor.value;
+      
+      // Se temos permissão de escrita no arquivo original (API Moderna)
+      if (fileHandle) {
+        updateStatus("Salvando no disco...", "busy");
+        const writable = await fileHandle.createWritable();
+        await writable.write(content);
+        await writable.close();
+        updateStatus("Salvo no arquivo original!", "linked");
+        return;
+      }
 
-Mantendo a filosofia **Keep It Simple**, o projeto não possui dependências complexas de Node_modules para rodar.
+      // Fallback: Download tradicional
+      const name = fileName.value.trim() || "untitled.txt";
+      const blob = new Blob([content], {type: "text/plain;charset=utf-8"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 200);
+      updateStatus("Download concluído!");
+      
+    } catch (e) {
+      alert("Erro ao salvar: " + e.message);
+      updateStatus("Erro ao salvar");
+    }
+  };
 
-*   `index.html`: Contém todo o HTML, CSS (Estilos Retrô) e JavaScript (Lógica de Editor + Integração IA).
-*   *Não há outros arquivos necessários para o deploy.*
+  // Drag & Drop
+  // Nota: Drag & Drop nativo geralmente resulta em arquivo Read-Only por segurança.
+  // Para manter simples, tratamos como novo arquivo (reset handle).
+  const dropZone = document.getElementById("dropZone");
+  window.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('active'); });
+  window.addEventListener('dragleave', (e) => { if(e.target === dropZone) dropZone.classList.remove('active'); });
+  window.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('active');
+    const file = e.dataTransfer.files[0];
+    if(file) {
+      fileHandle = null; // Reseta vínculo pois drop é apenas leitura
+      editor.value = await file.text();
+      fileName.value = file.name;
+      updateView();
+      updateStatus("Aberto via Drop (Cópia)");
+    }
+  });
 
----
+  // Init
+  updateView();
+</script>
 
-<div align="center">
-<br>
+<!-- Script IA (Módulo) -->
+<script type="module">
+  import { GoogleGenAI } from "@google/genai";
 
-<img src="https://readme-typing-svg.herokuapp.com?font=Press+Start+2P&weight=400&size=18&duration=4000&pause=1000&color=FFB86C&background=00000000&center=true&vCenter=true&width=600&height=50&lines=CODE+IS+ART" alt="Code is Art" />
+  const getApiKey = () => localStorage.getItem("GEMINI_API_KEY") || "";
+  let ai = null;
+  const apiKey = getApiKey();
+  if (apiKey) {
+    try { ai = new GoogleGenAI({ apiKey: apiKey }); } catch (e) { console.error(e); }
+  }
 
-<img src="https://readme-typing-svg.herokuapp.com?font=Press+Start+2P&weight=400&size=14&duration=5000&pause=2000&color=F8F8F2&background=00000000&center=true&vCenter=true&width=800&height=80&lines=%22A+Eucaristia+%C3%A9+a+minha+autoestrada;para+o+C%C3%A9u.%22" alt="Frase de São Carlo Acutis" />
+  window.handleAiClick = () => {
+    const key = getApiKey();
+    if(!key) {
+      const input = prompt("Chave API Google Gemini necessária:");
+      if(input) {
+        localStorage.setItem("GEMINI_API_KEY", input);
+        try {
+          ai = new GoogleGenAI({ apiKey: input });
+          alert("Conectado!");
+          document.getElementById('aiModal').classList.add('open');
+        } catch(e) { location.reload(); }
+      }
+      return;
+    }
+    document.getElementById('aiModal').classList.add('open');
+  };
 
-<p style="color: #6272A4; font-style: italic; max-width: 600px;">
-Dedicado a <strong>São Carlo Acutis</strong>, padroeiro da Internet e programador de Deus.
-<br>Que cada linha de código seja uma forma de criar e conectar.
-</p>
+  window.executeAiAction = async (action) => {
+    const editor = document.getElementById("editor");
+    if(!editor.value.trim()) return alert("Editor vazio!");
+    if(!ai) return alert("IA não configurada.");
+    
+    document.getElementById("loading").style.display = 'block';
+    
+    const code = editor.value;
+    let promptText = "";
+    switch(action) {
+      case 'fix': promptText = "Fix bugs/grammar in this code. Return ONLY the fixed code/text:\n\n" + code; break;
+      case 'refactor': promptText = "Refactor this code. Return ONLY the code:\n\n" + code; break;
+      case 'explain': promptText = "Explain this in Portuguese:\n\n" + code; break;
+      case 'convert': promptText = "Convert to Python. Return ONLY code:\n\n" + code; break;
+    }
 
-<code>#RetroCoding</code> &nbsp; <code>#GeminiAI</code> &nbsp; <code>#SaoCarloAcutis</code>
-
-<br>
-</div>
-
----
-
-<div align="center">
-<sub>Desenvolvido com 💜 e ☕ por <a href="https://github.com/facoriolano">@facoriolano</a></sub>
-</div>
+    try {
+      const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: promptText });
+      let result = response.text;
+      
+      if(action !== 'explain') {
+        result = result.replace(/^```\w*\n?/, '').replace(/\n?```$/, '');
+      } else {
+        result = "/* " + result.replace(/\*\//g, "* /") + " */\n\n" + code;
+      }
+      
+      editor.value = result;
+      // Dispara evento input manualmente para atualizar o highlight
+      editor.dispatchEvent(new Event('input'));
+      document.getElementById('aiModal').classList.remove('open');
+    } catch(err) {
+      alert("Erro IA: " + err.message);
+    } finally {
+      document.getElementById("loading").style.display = 'none';
+    }
+  };
+</script>
+</body>
+</html>
